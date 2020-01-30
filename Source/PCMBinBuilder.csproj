@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{13C7FC36-2E9A-4E97-A0AF-F330260ACEC7}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>PCMBinBuilder</RootNamespace>
+    <AssemblyName>PCMBinBuilder</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="frmAction.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmAction.Designer.cs">
+      <DependentUpon>frmAction.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmMain.Designer.cs">
+      <DependentUpon>FrmMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmPatcher.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmPatcher.Designer.cs">
+      <DependentUpon>frmPatcher.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmAsk.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmAsk.Designer.cs">
+      <DependentUpon>frmAsk.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmFileinfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmFileinfo.Designer.cs">
+      <DependentUpon>frmFileinfo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmSegmentList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmSegmentList.Designer.cs">
+      <DependentUpon>frmSegmentList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmSelectSegment.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmSelectSegment.Designer.cs">
+      <DependentUpon>frmSelectSegment.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmModifyBin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmModifyBin.Designer.cs">
+      <DependentUpon>frmModifyBin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="globals.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="frmAction.resx">
+      <DependentUpon>frmAction.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmMain.resx">
+      <DependentUpon>FrmMain.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmPatcher.resx">
+      <DependentUpon>frmPatcher.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmAsk.resx">
+      <DependentUpon>frmAsk.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmFileinfo.resx">
+      <DependentUpon>frmFileinfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmSegmentList.resx">
+      <DependentUpon>frmSegmentList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmSelectSegment.resx">
+      <DependentUpon>frmSelectSegment.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmModifyBin.resx">
+      <DependentUpon>frmModifyBin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
