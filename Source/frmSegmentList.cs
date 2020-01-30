@@ -163,14 +163,20 @@ namespace PCMBinBuilder
         {
             if (this.Text == "Select segments to swap")
             { 
+                //Return back to "Modify BIN
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
             else
             {
-                byte [] buf = globals.BuildBintoMem();
-                globals.SaveBintoFile(buf);
-                this.Close();
+                frmAction frmA = new frmAction();
+                frmA.CreateBinary();
+                if (frmA.ShowDialog(this) == DialogResult.OK)
+                {
+                    frmA.Dispose();
+                    this.Close();
+                }
+                frmA.Dispose();
             }
 
         }

@@ -29,12 +29,21 @@ namespace PCMBinBuilder
             labelBaseFile.Text = Fname;
             labelBinInfo.Text = globals.PcmFileInfo(Fname);
             globals.PcmSegments[1].Source = Fname;
+            globals.PcmSegments[1].SourceFile = Fname;
             globals.PcmSegments[1].GetFrom = "file";
 
         }
 
         private void btnApply_Click(object sender, EventArgs e)
         {
+            frmAction frmA = new frmAction();
+            frmA.CreateBinary();
+            if (frmA.ShowDialog(this) == DialogResult.OK)
+            {
+                frmA.Dispose();
+                this.Close();
+            }
+            frmA.Dispose();
 
         }
 

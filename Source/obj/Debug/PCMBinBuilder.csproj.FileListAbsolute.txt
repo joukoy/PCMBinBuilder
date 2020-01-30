@@ -1,0 +1,15 @@
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.csprojAssemblyReference.cache
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.frmAction.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmMain.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmPatcher.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmAsk.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmFileinfo.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmSegmentList.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmSelectSegment.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.FrmModBin.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.Properties.Resources.resources
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.csproj.GenerateResource.cache
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\bin\Debug\PCMBinBuilder.exe
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\bin\Debug\PCMBinBuilder.pdb
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.exe
+Y:\data\Birdi\Visualstudio\PCMBinBuilder\Source\obj\Debug\PCMBinBuilder.pdb

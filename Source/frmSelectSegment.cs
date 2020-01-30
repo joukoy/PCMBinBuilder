@@ -191,12 +191,12 @@ namespace PCMBinBuilder
         {
             if (labelSelectOS.Text=="Select patches")
             {
-                for (int p = 0; p < listView1.SelectedItems.Count; p++)
+                for (int i = 0; i < listView1.SelectedItems.Count; i++)
                 {
                     globals.Patch P;
-                    P.Name = listView1.SelectedItems[p].Text;
-                    P.Description = listView1.SelectedItems[p].SubItems["Description"];
-                    P.FileName = listView1.SelectedItems[p].Tag;
+                    P.Name = listView1.SelectedItems[i].Text;
+                    P.Description = listView1.SelectedItems[i].SubItems["Description"].Text;
+                    P.FileName = listView1.SelectedItems[i].Tag.ToString();
                     globals.PatchList.Add(P);
                     
                 }
@@ -209,7 +209,7 @@ namespace PCMBinBuilder
                     {
                         globals.PcmSegments[SegNr].GetFrom = "cal";
                         globals.PcmSegments[SegNr].Source = listView1.SelectedItems[0].Text;
-                        globals.PcmSegments[SegNr].SourceFile = listView1.SelectedItems[0].Tag;
+                        globals.PcmSegments[SegNr].SourceFile = listView1.SelectedItems[0].Tag.ToString();
                     }
                 }
                 else if (radioButton3.Checked)

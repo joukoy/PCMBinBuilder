@@ -16,6 +16,8 @@ namespace PCMBinBuilder
         {
             InitializeComponent();
         }
+
+        private Boolean BuildOK = false;
         public  uint CalculateChecksumOS(byte[] Data)
         {
             uint sum = 0;
@@ -96,43 +98,71 @@ namespace PCMBinBuilder
         {
             for (int s = 2; s<9; s++)
             {
-                if (globals.PcmSegments[s].GetFrom == "cal")
-                {
-                    string SegFile = 
-                    globals.ReadSegment(OSfile + ".ossegment2", 0, globals.PcmSegments[0].End, globals.PcmSegments[0].Start, ref buf);
+                if (globals.PcmSegments[s].GetFrom != "") { 
+                    string FileName = globals.PcmSegments[s].SourceFile;
+                    if (globals.PcmSegments[s].GetFrom == "cal")
+                    {
+                        long fsize = new System.IO.FileInfo(FileName).Length;
+                        long SegSize = globals.PcmSegments[s].End - globals.PcmSegments[s].Start;
+                        if (fsize != SegSize)
+                        {
+
+                            throw new FileLoadException(String.Format("{0} File size = {1}, Expected =  {2}", FileName, fsize, SegSize));
+                        }
+                        globals.ReadSegmentFile(FileName, globals.PcmSegments[s].Start, globals.PcmSegments[s].End, ref buf);
+                    }
+                    else if (globals.PcmSegments[s].GetFrom == "file")
+                    {
+                        globals.ReadSegmentFromBin(FileName, globals.PcmSegments[s].Start, globals.PcmSegments[s].End, ref buf);
+                    }
+                    //Check if readed segment have correct segment number in address start + 3
+                    if (buf[globals.PcmSegments[s].Start + 3] != s)
+                    {
+                        throw new FileLoadException(String.Format("Wrong segment number in file: {0}", FileName));
+                    }
                 }
             }
         }
         private  void SetVinCode(ref byte[] buf)
         {
-
+            Logger("VIN code not implemted yet", true);
         }
 
         private  void AddPatches(ref byte[] buf)
         {
-
+            Logger("Patches not implemented yet");
         }
 
         private void FillEmptyArea(ref byte[] buf)
         {
-
+            Logger("Filling empty area");
+            for (uint i = (globals.PcmSegments[8].End + 1); i < (0x20000 - 1); i++)
+            {
+                buf[i] = 0x4A;
+                i++;
+                buf[i] = 0xFC;
+            }
+            buf[globals.BinSize-2] = 0x4A;
+            buf[globals.BinSize-1] = 0xFC;
+            Logger("(OK)");
         }
 
-        private static void LoadOS(ref byte[] buf)
+        private void LoadOS(ref byte[] buf)
         {
             if (globals.PcmSegments[1].GetFrom == "file") //Get full binary file as OS
             {
-                logger("Loading OS segment 1");
+                Logger("Loading OS file: " + globals.PcmSegments[1].SourceFile);
                 buf = globals.ReadBinFile(globals.PcmSegments[1].SourceFile);
             }
             else
             {
-                logger("Loading OS segment 2");
-                globals.ReadSegment(globals.PcmSegments[1].SourceFile, 0, globals.PcmSegments[1].End, 0, ref buf);
+                Logger("Loading OS segment 1");
+                globals.ReadSegmentFile(globals.PcmSegments[1].SourceFile, 0, globals.PcmSegments[1].End, ref buf);
+                Logger("Loading OS segment 2");
                 //OS Segment 2 file = OS segment 1 file, only last digit differ
-                globals.ReadSegment(globals.PcmSegments[1].SourceFile.Replace(".ossegment1",".ossegment2"),0 , globals.PcmSegments[0].End, globals.PcmSegments[0].Start, ref buf);
+                globals.ReadSegmentFile(globals.PcmSegments[1].SourceFile.Replace(".ossegment1",".ossegment2"), globals.PcmSegments[0].Start, globals.PcmSegments[0].End, ref buf);
             }
-            logger("(OK)");
+            Logger("(OK)");
         }
 
         public byte[] BuildBintoMem()
@@ -150,7 +180,7 @@ namespace PCMBinBuilder
 
         public void SaveBintoFile(byte[] buf)
         {
-            string FileName = SelectSaveFile();
+            string FileName = globals.SelectSaveFile();
             if (FileName.Length < 1)
                 return;
             using (FileStream stream = new FileStream(FileName, FileMode.Create))
@@ -170,14 +200,15 @@ namespace PCMBinBuilder
             {
                 byte[] buf = BuildBintoMem();
                 SaveBintoFile(buf);
+                Logger("Done");
+                BuildOK = true;
             }
             catch (Exception e)
             {
+                Logger("Error:", true);
                 Logger(e.Message);
-            }
-            finally
-            {
-                Logger("Done");
+                BuildOK = false;
+                return;
             }
         }
         private void Logger(string LogText, Boolean newLine = true)
@@ -185,6 +216,7 @@ namespace PCMBinBuilder
             txtStatus.AppendText(LogText);
             if (newLine)
                 txtStatus.AppendText(Environment.NewLine);
+            Application.DoEvents();
         }
         public void ExtractSegments()
         {
@@ -203,28 +235,28 @@ namespace PCMBinBuilder
                 return;
             }
 
-            FrmAsk testDialog = new FrmAsk();
+            FrmAsk frmA = new FrmAsk();
             string Descr;
 
-            testDialog.TextBox1.Text = Path.GetFileName(Fname).Replace(".bin", "");
-            testDialog.AcceptButton = testDialog.btnOK;
+            frmA.TextBox1.Text = Path.GetFileName(Fname).Replace(".bin", "");
+            frmA.AcceptButton = frmA.btnOK;
 
-            // Show testDialog as a modal dialog and determine if DialogResult = OK.
-            if (testDialog.ShowDialog(this) == DialogResult.OK)
+            // Show frmA as a modal dialog and determine if DialogResult = OK.
+            if (frmA.ShowDialog(this) == DialogResult.OK)
             {
-                // Read the contents of testDialog's TextBox.
-                Descr = testDialog.TextBox1.Text;
+                // Read the contents of frmA's TextBox.
+                Descr = frmA.TextBox1.Text;
             }
             else
             {
                 Descr = "";
             }
-            testDialog.Dispose();
+            frmA.Dispose();
             try
             {
-
                 Logger("Reading segment addresses from file: " + Fname,false);
                 globals.GetSegmentAddresses(Fname);
+                globals.GetSegmentInfo(Fname);
                 Logger("(OK)");
 
                 byte[] buf = globals.ReadBinFile(Fname);
@@ -269,7 +301,10 @@ namespace PCMBinBuilder
 
         private void btnClose_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK;
+            if (BuildOK)
+                this.DialogResult = DialogResult.OK;
+            else
+                this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
     }

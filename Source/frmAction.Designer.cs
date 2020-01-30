@@ -58,7 +58,7 @@
             this.Controls.Add(this.txtStatus);
             this.Controls.Add(this.btnClose);
             this.Name = "frmAction";
-            this.Text = "Form1";
+            this.Text = "Working...";
             this.Load += new System.EventHandler(this.frmAction_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

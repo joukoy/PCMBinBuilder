@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 internal class globals
 {
 
@@ -34,7 +35,7 @@ internal class globals
     public static string VIN="";
     public static string NewVIN="";
     //public static List<string> PatchList;
-    public static List<patch> PatchList;
+    public static List<Patch> PatchList;
     //public static byte[] BinBuffer;
 
     public static void InitializeMe()
@@ -121,8 +122,8 @@ internal class globals
         if (PatchList.Count>0)
         {
             Finfo += Environment.NewLine + "Patches: ";
-            foreach (string P in PatchList)
-                Finfo += P + ", ";
+            foreach (Patch P in PatchList)
+                Finfo += P.Name + ", ";
         }
         return Finfo;
 
@@ -297,15 +298,15 @@ internal class globals
         }
         return buf;
     }
-    public static void ReadSegmentFromBin(string FileName, uint StartAddressFile, uint EndAddress, uint StartAddressBuf, ref byte[] Buffer)
+    public static void ReadSegmentFromBin(string FileName, uint StartAddress, uint EndAddress, ref byte[] Buffer)
     {
 
-        long offset = StartAddressBuf;
-        long remaining = (EndAddress - StartAddressBuf);
+        long offset = StartAddress;
+        long remaining = (EndAddress - StartAddress);
 
         using (BinaryReader freader = new BinaryReader(File.Open(FileName, FileMode.Open)))
         {
-            freader.BaseStream.Seek(StartAddressFile, 0);
+            freader.BaseStream.Seek(StartAddress, 0);
             while (remaining > 0)
             {
                 int read = freader.Read(Buffer, (int)offset, (int)remaining);
@@ -332,22 +333,22 @@ internal class globals
                 int read = freader.Read(Buffer, (int)offset, (int)remaining);
                 if (read <= 0)
                     throw new EndOfStreamException
-                        (String.Format("End of stream reached with {0} bytes left to read", remaining));
+                        (String.Format("File: {0}, End of stream reached with {0} bytes left to read", FileName, remaining));
                 remaining -= read;
                 offset += read;
             }
             freader.Close();
-        }
-
+        }        
     }
 
     public static void WriteSegmentToFile(string Fname, uint StartAddr, uint EndAddr, byte[] Buf)
     {
+
         using (FileStream stream = new FileStream(Fname, FileMode.Create))
-        {
+        {            
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                writer.Write(Buf, (int)StartAddr, (int)(EndAddr - StartAddr));
+                writer.Write(Buf, (int)StartAddr, (int)(EndAddr-StartAddr));
                 writer.Close();
             }
         }
@@ -367,8 +368,7 @@ internal class globals
 
     public static string ValidateVIN(string VINcode)
     {
-        if (VINcode.Length != 17)
-            return "";
+        VINcode = Regex.Replace(VINcode, "[^a-zA-Z0-9]", "");
         return VINcode.ToUpper();
     }
 }

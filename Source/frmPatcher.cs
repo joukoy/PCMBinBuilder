@@ -18,6 +18,8 @@ namespace PCMBinBuilder
             InitializeComponent();
         }
 
+        private static List<uint> PatchData;
+        private static List<uint> PatchAddr;
         private void FrmPatcher_Load(object sender, EventArgs e)
         {
         }
@@ -50,8 +52,8 @@ namespace PCMBinBuilder
             {
                 if (OrgFile[i] != ModFile[i])
                 {
-                    globals.patchAddr.Add(i) ;
-                    globals.patchData.Add(ModFile[i]);
+                    PatchAddr.Add(i) ;
+                    PatchData.Add(ModFile[i]);
                     txtResult.AppendText(i.ToString("X1") + ":" +OrgFile[i].ToString("X1")+ "=>" + ModFile[i].ToString("X1") + Environment.NewLine);
                 }
 
@@ -68,15 +70,15 @@ namespace PCMBinBuilder
             }
             byte[] BaseFile = new byte[fsize];
             byte[] ModifierFile = new byte[fsize];
-            globals.patchAddr = new List<uint>();
-            globals.patchData = new List<uint>();
+            PatchAddr = new List<uint>();
+            PatchData = new List<uint>();
 
-
+            globals.GetPcmType(txtBaseFile.Text);
             globals.GetSegmentAddresses(txtBaseFile.Text);
             labelOS.Text = globals.GetOSid();
             
             
-            globals.ReadSegment(txtModifierFile.Text, 0, (uint)BaseFile.LongLength, (uint)BaseFile.LongLength, ref ModifierFile);
+            globals.ReadSegmentFromBin(txtModifierFile.Text, 0, (uint)BaseFile.LongLength,  ref ModifierFile);
             txtResult.Text = "";
             for (int s=1;s<=8;s++) { 
                 CompareSegment(globals.PcmSegments[s].Start, globals.PcmSegments[s].End, BaseFile, ModifierFile);
@@ -86,7 +88,7 @@ namespace PCMBinBuilder
         private void button3_Click(object sender, EventArgs e)
         {
             CompareBins();
-            if (globals.patchAddr.Count>0)
+            if (PatchAddr.Count>0)
             {
                 btnSave.Enabled = true;
                 btnSave.Text = "Save patch";
@@ -118,8 +120,8 @@ namespace PCMBinBuilder
                 try
                 {
                     StreamWriter sw = new StreamWriter(Path.Combine(PatchFolder,PatchName));
-                    for(int i = 0; i < globals.patchAddr.Count ; i++) { 
-                        sw.WriteLine(globals.patchAddr[i].ToString() + ":"+globals.patchData[i].ToString());
+                    for(int i = 0; i < PatchAddr.Count ; i++) { 
+                        sw.WriteLine(PatchAddr[i].ToString() + ":"+PatchData[i].ToString());
                     }
                     sw.Close();
                 }

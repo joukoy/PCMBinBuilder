@@ -24,15 +24,14 @@ namespace PCMBinBuilder
         {
             if (this.Text == "Enter VIN Code")
             {
-                string tmp = globals.ValidateVIN(TextBox1.Text);
-                if (tmp == "")
+                TextBox1.Text = globals.ValidateVIN(TextBox1.Text);
+                if (TextBox1.Text.Length != 17)
                 {
-                       MessageBox.Show("VIN code must be 17 digits long!","Check VIN Length");
-                       return;
+                    MessageBox.Show("VIN code must be 17 digits long!","Check VIN Length");
+                    return;
                 }
-                TextBox1.Text = tmp;
-                this.DialogResult = DialogResult.OK;
-            }
+            } 
+            this.DialogResult = DialogResult.OK;
             this.Close();
         }
 
