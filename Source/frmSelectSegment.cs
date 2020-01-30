@@ -43,6 +43,7 @@ namespace PCMBinBuilder
             {
                 string OS = file.Name.Replace(".ossegment1", "");
                 var item = new ListViewItem(OS);
+                item.Tag = file.FullName;
                 string DescrFile = file.FullName.Replace(".ossegment1", ".txt");
                 if (File.Exists(DescrFile))
                 {
@@ -77,6 +78,7 @@ namespace PCMBinBuilder
                 string CalName = file.Name.Replace(".calsegment", "");
                 CalName = CalName.Replace(globals.GetOSid() + "-" + SegmentName +"-", "");
                 var item = new ListViewItem(CalName);
+                item.Tag = file.FullName;
                 string DescrFile = file.FullName +  ".txt";
                 if (File.Exists(DescrFile))
                 {
@@ -111,6 +113,7 @@ namespace PCMBinBuilder
                 string CalName = file.Name;
                 CalName = CalName.Replace(globals.GetOSid() +"-" , "");
                 var item = new ListViewItem(CalName);
+                item.Tag = file.FullName;
                 listView1.Items.Add(item);
             }
 
@@ -190,10 +193,15 @@ namespace PCMBinBuilder
             {
                 for (int p = 0; p < listView1.SelectedItems.Count; p++)
                 {
-                    globals.PatchList.Add(listView1.SelectedItems[p].Text);
+                    globals.Patch P;
+                    P.Name = listView1.SelectedItems[p].Text;
+                    P.Description = listView1.SelectedItems[p].SubItems["Description"];
+                    P.FileName = listView1.SelectedItems[p].Tag;
+                    globals.PatchList.Add(P);
+                    
                 }
 
-            } else { 
+            } else {  //Select segment
                 if (radioButton2.Checked)
                 {
 
@@ -201,12 +209,14 @@ namespace PCMBinBuilder
                     {
                         globals.PcmSegments[SegNr].GetFrom = "cal";
                         globals.PcmSegments[SegNr].Source = listView1.SelectedItems[0].Text;
+                        globals.PcmSegments[SegNr].SourceFile = listView1.SelectedItems[0].Tag;
                     }
                 }
                 else if (radioButton3.Checked)
                 {
                     globals.PcmSegments[SegNr].GetFrom = "file";
                     globals.PcmSegments[SegNr].Source = txtCalFile.Text;
+                    globals.PcmSegments[SegNr].SourceFile = txtCalFile.Text;
                 }
             }
             this.DialogResult = DialogResult.OK;

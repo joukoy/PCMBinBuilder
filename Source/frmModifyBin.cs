@@ -36,8 +36,6 @@ namespace PCMBinBuilder
         private void btnApply_Click(object sender, EventArgs e)
         {
 
-            byte[] buf = globals.BuildBintoMem();
-            globals.SaveBintoFile(buf);
         }
 
         private void btnSwapSegments_Click(object sender, EventArgs e)

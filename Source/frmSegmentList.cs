@@ -26,10 +26,7 @@ namespace PCMBinBuilder
         {
             string Fname;
             labelOS.Text = globals.PcmSegments[1].Source;
-            if (globals.PcmSegments[1].GetFrom == "cal")
-                Fname = Path.Combine(Application.StartupPath, "OS", globals.PcmSegments[1].Source + ".ossegment1");
-            else
-                Fname = globals.PcmSegments[1].Source;
+            Fname = globals.PcmSegments[1].SourceFile;
             globals.GetPcmType(Fname);
             globals.GetSegmentAddresses(Fname);
             int i = 0;
