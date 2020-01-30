@@ -9,5 +9,5 @@ Create new bin from scratch or modify existing.
 
 No warranty!
 Use at your own risk!
-Experimental swoftware!
+Experimental software!
 
