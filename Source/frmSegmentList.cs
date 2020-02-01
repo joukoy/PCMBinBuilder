@@ -29,45 +29,40 @@ namespace PCMBinBuilder
             Fname = globals.PcmSegments[1].SourceFile;
             globals.GetPcmType(Fname);
             globals.GetSegmentAddresses(Fname);
-            int i = 0;
-            for (i = 2; i <= 9; i++)
+            int i = 1;
+            for (int s = 2; s <= 9; s++)
             {
                 //button1[] BtnX = new button1;
                 Button newButton = new Button();
                 this.Controls.Add(newButton);
-                newButton.Text = globals.PcmSegments[i].Name;
-                newButton.Location = new Point(10, (5 + i * 30));
-                newButton.Size = new Size(600, 25);
+                if (globals.PcmSegments[s].Source == "")
+                    newButton.Text = globals.PcmSegments[s].Name;
+                else
+                    newButton.Text = globals.PcmSegments[s].Name + ":  " + globals.PcmSegments[s].Source;
+                newButton.Location = new Point(10, (i * 30));
+                newButton.Size = new Size(640, 25);
                 newButton.Click += new System.EventHandler(this.newButton_Click);
-                newButton.Tag = i;
-
+                newButton.Tag = s;
+                i++;
             }
 
             // Add button for VIN
             Button VINButton = new Button();
             this.Controls.Add(VINButton);
             VINButton.Text = "VIN";
-            VINButton.Location = new Point(10, (5 + i * 30));
-            VINButton.Size = new Size(600, 25);
+            VINButton.Location = new Point(10, (i * 30));
+            VINButton.Size = new Size(640, 25);
             VINButton.Click += new System.EventHandler(this.VINButton_Click);
             VINButton.Tag = 20;
 
-            // Add button for "Read VIN from File"
-            Button VINReadButton = new Button();
-            this.Controls.Add(VINReadButton);
-            VINReadButton.Text = "...";
-            VINReadButton.Location = new Point(620, (5 + i * 30));
-            VINReadButton.Size = new Size(40, 25);
-            VINReadButton.Click += new System.EventHandler(this.VINReadButton_Click);
-            VINReadButton.Tag = 21;
 
             i++;
             //Add button for Patches
             Button PatchButton = new Button();
             this.Controls.Add(PatchButton);
             PatchButton.Text = "Patches";
-            PatchButton.Location = new Point(10, (5 + i * 30));
-            PatchButton.Size = new Size(600, 25);
+            PatchButton.Location = new Point(10, ( i * 30));
+            PatchButton.Size = new Size(640, 25);
             PatchButton.Click += new System.EventHandler(this.PatchButton_Click);
             PatchButton.Tag = 30;
 
@@ -79,7 +74,7 @@ namespace PCMBinBuilder
             int SegNr = (int)button.Tag;
 
             FrmSelectSegment frm2 = new FrmSelectSegment();
-            frm2.Text = "Select Patches";
+            frm2.Text = "Select patches"; 
             frm2.labelSelectOS.Text = frm2.Text;
             frm2.Tag = 30;
             frm2.LoadPatches();
@@ -127,6 +122,7 @@ namespace PCMBinBuilder
                 VinDialog.TextBox1.Text = button.Text.Replace("VIN: ", "");
             VinDialog.Text = "Enter VIN Code";
             VinDialog.label1.Text = "Enter VIN Code";
+            VinDialog.btnReadFromFile.Visible = true;
             VinDialog.AcceptButton = VinDialog.btnOK;
 
             // Show VinDialog as a modal dialog and determine if DialogResult = OK.
@@ -169,6 +165,15 @@ namespace PCMBinBuilder
             }
             else
             {
+                for (int s=2; s<=8; s++)
+                {
+                    if (globals.PcmSegments[s].Source == "")
+                    {
+                        MessageBox.Show("Please select all segments!", "Please select segments");
+                        return;
+                    }
+
+                }
                 frmAction frmA = new frmAction();
                 frmA.CreateBinary();
                 if (frmA.ShowDialog(this) == DialogResult.OK)
@@ -181,11 +186,5 @@ namespace PCMBinBuilder
 
         }
 
-        public void Logger(string LogText, Boolean NewLine = true)
-        {
-            txtStatus.AppendText(LogText);
-            if (NewLine)
-                txtStatus.AppendText(Environment.NewLine);
-        }
     }
 }

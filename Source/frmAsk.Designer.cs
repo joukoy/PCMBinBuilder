@@ -32,6 +32,7 @@
             this.TextBox1 = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.btnReadFromFile = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -71,11 +72,23 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.button2_Click);
             // 
+            // btnReadFromFile
+            // 
+            this.btnReadFromFile.Location = new System.Drawing.Point(27, 70);
+            this.btnReadFromFile.Name = "btnReadFromFile";
+            this.btnReadFromFile.Size = new System.Drawing.Size(107, 24);
+            this.btnReadFromFile.TabIndex = 4;
+            this.btnReadFromFile.Text = "Read from file...";
+            this.btnReadFromFile.UseVisualStyleBackColor = true;
+            this.btnReadFromFile.Visible = false;
+            this.btnReadFromFile.Click += new System.EventHandler(this.btnReadFromFile_Click);
+            // 
             // FrmAsk
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(493, 75);
+            this.ClientSize = new System.Drawing.Size(493, 106);
+            this.Controls.Add(this.btnReadFromFile);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.TextBox1);
@@ -92,5 +105,6 @@
         public System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
         public System.Windows.Forms.Label label1;
+        public System.Windows.Forms.Button btnReadFromFile;
     }
 }

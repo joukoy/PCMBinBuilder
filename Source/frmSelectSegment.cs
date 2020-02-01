@@ -32,7 +32,7 @@ namespace PCMBinBuilder
             listView1.View = View.Details;
             listView1.Columns.Add("OS");
             listView1.Columns.Add("Description");
-            listView1.Columns[0].Width = 100;
+            listView1.Columns[0].Width = 150;
             listView1.Columns[1].Width = 600;
             SegNr = 1;
 
@@ -44,7 +44,7 @@ namespace PCMBinBuilder
                 string OS = file.Name.Replace(".ossegment1", "");
                 var item = new ListViewItem(OS);
                 item.Tag = file.FullName;
-                string DescrFile = file.FullName.Replace(".ossegment1", ".txt");
+                string DescrFile = file.FullName +  ".txt";
                 if (File.Exists(DescrFile))
                 {
                     StreamReader sr = new StreamReader(DescrFile);
@@ -107,11 +107,13 @@ namespace PCMBinBuilder
             radioButton2.Checked = true;
             string CalFolder = Path.Combine(Application.StartupPath, "Patches");
             DirectoryInfo d = new DirectoryInfo(CalFolder);
-            FileInfo[] Files = d.GetFiles(globals.GetOSid() + "-" + "*");
+            
+            FileInfo[] Files = d.GetFiles(globals.GetOSid() + "*.pcmpatch");
             foreach (FileInfo file in Files)
             {
                 string CalName = file.Name;
                 CalName = CalName.Replace(globals.GetOSid() +"-" , "");
+                CalName = CalName.Replace(".pcmpatch", "");
                 var item = new ListViewItem(CalName);
                 item.Tag = file.FullName;
                 listView1.Items.Add(item);
@@ -195,7 +197,7 @@ namespace PCMBinBuilder
                 {
                     globals.Patch P;
                     P.Name = listView1.SelectedItems[i].Text;
-                    P.Description = listView1.SelectedItems[i].SubItems["Description"].Text;
+                    P.Description = listView1.SelectedItems[i].SubItems[0].Text;
                     P.FileName = listView1.SelectedItems[i].Tag.ToString();
                     globals.PatchList.Add(P);
                     
@@ -221,6 +223,15 @@ namespace PCMBinBuilder
             }
             this.DialogResult = DialogResult.OK;
             this.Close();
+        }
+
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0 && radioButton2.Checked)
+                btnOK.Enabled = true;
+            else
+                btnOK.Enabled = false;
+
         }
     }
     }

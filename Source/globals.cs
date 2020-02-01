@@ -31,6 +31,7 @@ internal class globals
     public const int MaxSeg= 10;
     public static PcmSegment[] PcmSegments = new PcmSegment[MaxSeg];
     public static string PcmType="";
+    public static uint VINAddr = 0;
     public static uint BinSize = 0;
     public static string VIN="";
     public static string NewVIN="";
@@ -43,14 +44,14 @@ internal class globals
         PcmSegments[0].Name = "OS2";
         PcmSegments[1].Name = "OS";
         PcmSegments[0].PN = 0;
-        PcmSegments[2].Name = "EngineCAL";
+        PcmSegments[2].Name = "EngineCal";
         PcmSegments[3].Name = "EngineDiag";
         PcmSegments[4].Name = "TransCal";
         PcmSegments[5].Name = "TransDiag";
         PcmSegments[6].Name = "Fuel";
         PcmSegments[7].Name = "System";
         PcmSegments[8].Name = "Speedo";
-        PcmSegments[9].Name = "EEprom-data";
+        PcmSegments[9].Name = "EEprom_data";
 
         if (!File.Exists(Path.Combine(Application.StartupPath, "OS")))
             Directory.CreateDirectory(Path.Combine(Application.StartupPath, "OS"));
@@ -60,8 +61,6 @@ internal class globals
             Directory.CreateDirectory(Path.Combine(Application.StartupPath, "Patches"));
 
         PatchList = new List<Patch>();
-        NewVIN = "";
-        VIN = "";
 
     }
     public static string SelectFile(string Title = "Select bin file")
@@ -95,6 +94,21 @@ internal class globals
 
     }
 
+    public static string SelectFolder()
+    {
+        using (var fbd = new FolderBrowserDialog())
+        {
+            DialogResult result = fbd.ShowDialog();
+
+            if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+            {
+                string[] files = Directory.GetFiles(fbd.SelectedPath);
+
+                System.Windows.Forms.MessageBox.Show("Files found: " + files.Length.ToString(), "Message");
+            }
+        }
+        return "";
+    }
     public static string GetOSid()
     {
         return PcmSegments[1].PN.ToString();
@@ -105,10 +119,23 @@ internal class globals
         return PcmSegments[1].Ver;
     }
 
+    public static string GetOsidFromFile(string FileName)
+    {
+        byte[] Buf = new byte[2];
+        using (BinaryReader reader = new BinaryReader(File.Open(FileName, FileMode.Open)))
+        {
+            reader.BaseStream.Seek(0x504, 0);
+            uint PN = reader.ReadUInt32BE();
+            reader.BaseStream.Close();
+            return PN.ToString();
+        }
+
+    }
     public static string GetModifications()
     {
         string Finfo = "";
-        for (int i = 1; i <= 9; i++)
+        
+        for (int i = 2; i <= 9; i++)
         {
             if (globals.PcmSegments[i].Source != "")
             {
@@ -187,7 +214,7 @@ internal class globals
 
                 //OS Segments:
                 PcmSegments[1].Start = 0;
-                PcmSegments[1].End = 0x4000;
+                PcmSegments[1].End = 0x3FFF;
                 PcmSegments[0].Start = 0x020000;
                 if (PcmType == "P01")
                     PcmSegments[0].End = 0x07FFFD;
@@ -219,8 +246,8 @@ internal class globals
 
     public static string ReadVIN(string Fname)
     {
-        byte[] Buf = new byte[21];
-        uint VinAddr=0;
+        byte[] Buf = new byte[17];
+        //uint VinAddr=0;
         string VIN ="";
 
         using (BinaryReader reader = new BinaryReader(File.Open(Fname, FileMode.Open)))
@@ -232,12 +259,14 @@ internal class globals
             Buf[2] = reader.ReadByte();
             Buf[3] = reader.ReadByte();
             if (Buf[0] == 0xA5 && Buf[1] == 0xA0)
-                VinAddr = 0x4021;
-            else if(Buf[2] == 0xA5 && Buf[3] == 0xA0)
-                    VinAddr = 0x6021;            
-            if (VinAddr >0)
+                VINAddr = 0x4000;
+                //VinAddr = 0x4021;
+            else if (Buf[2] == 0xA5 && Buf[3] == 0xA0)
+                    VINAddr = 0x6000;
+                    //VinAddr = 0x6021;
+            if (VINAddr >0)
             {
-                reader.BaseStream.Seek(VinAddr,0);
+                reader.BaseStream.Seek((VINAddr + 33),0);
                 int read = reader.Read(Buf, 0, 17);
                 VIN = System.Text.Encoding.ASCII.GetString(Buf);
             }
@@ -249,7 +278,7 @@ internal class globals
     public static void GetEEpromInfo(string Fname)
     {
         byte[] Buf = new byte[4];
-        uint HWAddr = 0;
+        //uint HWAddr = 0;
 
         using (BinaryReader reader = new BinaryReader(File.Open(Fname, FileMode.Open)))
         {
@@ -260,14 +289,14 @@ internal class globals
             Buf[2] = reader.ReadByte();
             Buf[3] = reader.ReadByte();
             if (Buf[0] == 0xA5 && Buf[1] == 0xA0)
-                HWAddr = 0x4004;
+                VINAddr = 0x4000;
             else if (Buf[2] == 0xA5 && Buf[3] == 0xA0)
-                HWAddr = 0x6004;
-            if (HWAddr > 0)
+                VINAddr = 0x6000;
+            if (VINAddr > 0)
             {
-                reader.BaseStream.Seek(HWAddr, 0);
+                reader.BaseStream.Seek(VINAddr + 4, 0);
                 PcmSegments[9].PN = reader.ReadUInt32BE();
-                reader.BaseStream.Seek(HWAddr+24, 0);
+                reader.BaseStream.Seek(VINAddr+28, 0);
                 int read = reader.Read(Buf, 0, 4);
                 PcmSegments[9].Ver = System.Text.Encoding.ASCII.GetString(Buf);
             }
@@ -323,7 +352,7 @@ internal class globals
     public static void ReadSegmentFile(string FileName, uint StartAddress, uint EndAddress, ref byte[] Buffer)
     {
 
-        long offset = 0;
+        long offset = StartAddress;
         long remaining = (EndAddress - StartAddress);
 
         using (BinaryReader freader = new BinaryReader(File.Open(FileName, FileMode.Open)))
@@ -356,7 +385,7 @@ internal class globals
     }
 
 
-    public static void CleanSegmentInfo()
+    public static void CleanMe()
     {
         for (int s= 0; s < MaxSeg;s++)
         {
@@ -364,9 +393,15 @@ internal class globals
             PcmSegments[s].Source = "";
             PcmSegments[s].SourceFile = "";
         }
-    }
+        PatchList = new List<Patch>();
+        NewVIN = "";
+        VIN = "";
+        PcmType = "";
+        BinSize = 0;
 
-    public static string ValidateVIN(string VINcode)
+}
+
+public static string ValidateVIN(string VINcode)
     {
         VINcode = Regex.Replace(VINcode, "[^a-zA-Z0-9]", "");
         return VINcode.ToUpper();

@@ -29,28 +29,19 @@
         private void InitializeComponent()
         {
             this.btnApply = new System.Windows.Forms.Button();
-            this.txtStatus = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.labelOS = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // btnApply
             // 
-            this.btnApply.Location = new System.Drawing.Point(243, 384);
+            this.btnApply.Location = new System.Drawing.Point(282, 345);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(107, 37);
             this.btnApply.TabIndex = 1;
             this.btnApply.Text = "Apply";
             this.btnApply.UseVisualStyleBackColor = true;
             this.btnApply.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // txtStatus
-            // 
-            this.txtStatus.Location = new System.Drawing.Point(3, 433);
-            this.txtStatus.Multiline = true;
-            this.txtStatus.Name = "txtStatus";
-            this.txtStatus.Size = new System.Drawing.Size(686, 88);
-            this.txtStatus.TabIndex = 2;
             // 
             // label1
             // 
@@ -76,10 +67,9 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(690, 522);
+            this.ClientSize = new System.Drawing.Size(658, 388);
             this.Controls.Add(this.labelOS);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.txtStatus);
             this.Controls.Add(this.btnApply);
             this.Name = "FrmSegmentList";
             this.Text = "Build BIN";
@@ -91,7 +81,6 @@
 
         #endregion
         private System.Windows.Forms.Button btnApply;
-        private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label labelOS;
     }

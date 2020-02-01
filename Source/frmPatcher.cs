@@ -61,27 +61,38 @@ namespace PCMBinBuilder
         }
         public void CompareBins()
         {
-            long  fsize = new System.IO.FileInfo(txtBaseFile.Text).Length;
-            long fsize2 = new System.IO.FileInfo(txtModifierFile.Text).Length;
-            if (fsize != fsize2)
-            {
-                MessageBox.Show("Files are different size, will not compare!");
-                return;
-            }
-            byte[] BaseFile = new byte[fsize];
-            byte[] ModifierFile = new byte[fsize];
-            PatchAddr = new List<uint>();
-            PatchData = new List<uint>();
+            try 
+            { 
+                long  fsize = new System.IO.FileInfo(txtBaseFile.Text).Length;
+                long fsize2 = new System.IO.FileInfo(txtModifierFile.Text).Length;
+                if (fsize != fsize2)
+                {
+                    MessageBox.Show("Files are different size, will not compare!");
+                    return;
+                }
+                byte[] BaseFile = new byte[fsize];
+                byte[] ModifierFile = new byte[fsize];
+                PatchAddr = new List<uint>();
+                PatchData = new List<uint>();
 
-            globals.GetPcmType(txtBaseFile.Text);
-            globals.GetSegmentAddresses(txtBaseFile.Text);
-            labelOS.Text = globals.GetOSid();
+                globals.GetPcmType(txtBaseFile.Text);
+                globals.GetSegmentAddresses(txtBaseFile.Text);
+                labelOS.Text = globals.GetOSid();
+
+
+                //globals.ReadSegmentFromBin(txtModifierFile.Text, 0, (uint)BaseFile.LongLength,  ref ModifierFile);
+
+                BaseFile = globals.ReadBinFile(txtBaseFile.Text);
+                ModifierFile = globals.ReadBinFile(txtModifierFile.Text);
+                txtResult.Text = "";
+                for (int s=0;s<=8;s++) { //Compare all segments, but eeprom-data
+                    CompareSegment(globals.PcmSegments[s].Start, globals.PcmSegments[s].End, BaseFile, ModifierFile);
+                }
             
-            
-            globals.ReadSegmentFromBin(txtModifierFile.Text, 0, (uint)BaseFile.LongLength,  ref ModifierFile);
-            txtResult.Text = "";
-            for (int s=1;s<=8;s++) { 
-                CompareSegment(globals.PcmSegments[s].Start, globals.PcmSegments[s].End, BaseFile, ModifierFile);
+            }
+            catch (Exception ex)
+            {
+                Logger("Error: " + ex.Message);
             }
 
         }
@@ -112,27 +123,40 @@ namespace PCMBinBuilder
         {
             string PatchFolder = Path.Combine(Application.StartupPath, "Patches");
 
-            if (!File.Exists(PatchFolder))
-                Directory.CreateDirectory(PatchFolder);
-            if (txtPatchName.Text.Length >1)
+            try
             {
-                string PatchName = labelOS.Text + "-" + txtPatchName.Text;
-                try
+
+                if (!File.Exists(PatchFolder))
+                    Directory.CreateDirectory(PatchFolder);
+                if (txtPatchName.Text.Length < 1)
                 {
-                    StreamWriter sw = new StreamWriter(Path.Combine(PatchFolder,PatchName));
-                    for(int i = 0; i < PatchAddr.Count ; i++) { 
-                        sw.WriteLine(PatchAddr[i].ToString() + ":"+PatchData[i].ToString());
+                    Logger("Supply patch name (File name)");
+                    return;
+                }
+                else
+                {
+                    string PatchName = labelOS.Text + "-" + txtPatchName.Text;
+                    string PatchFile = Path.Combine(PatchFolder, PatchName + ".pcmpatch");
+                    uint Fnr = 0;
+                    while (File.Exists(PatchFile))
+                    {
+                        Fnr++;
+                        PatchFile = Path.Combine(PatchFolder, PatchName + "(" + Fnr.ToString() + ").pcmpatch");
+                    }
+                    Logger("Saving to file: " + PatchFile);
+                    StreamWriter sw = new StreamWriter(PatchFile);
+                    sw.WriteLine(txtPatchName.Text);
+                    for (int i = 0; i < PatchAddr.Count; i++)
+                    {
+                        sw.WriteLine(PatchAddr[i].ToString() + ":" + PatchData[i].ToString());
                     }
                     sw.Close();
-                }
-                catch (Exception ex)
-                {
-                    Logger("Exception: " + ex.Message);
-                }
-                finally
-                {
                     Logger("Patch saved");
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger("Error: " + ex.Message);
             }
         }
     }

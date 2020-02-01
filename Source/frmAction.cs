@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace PCMBinBuilder
 {
@@ -24,15 +25,22 @@ namespace PCMBinBuilder
             byte high;
             byte low;
 
+            //OS Segment 0
+            for (uint i = 0; i < 0x4FF; i += 2)
+            {
+                high = Data[i];
+                low = Data[i + 1];
+                sum = (uint)(sum + ((high << 8) | low));
+            }
             //OS Segment 1
-            for (uint i = globals.PcmSegments[1].Start + 2; i < globals.PcmSegments[1].End; i += 2)
+            for (uint i = 0x502; i < 0x3FFF; i += 2)
             {
                 high = Data[i];
                 low = Data[i + 1];
                 sum = (uint)(sum + ((high << 8) | low));
             }
             //OS Segment 2
-            for (uint i = globals.PcmSegments[0].Start + 2; i < globals.PcmSegments[0].End; i += 2)
+            for (uint i = globals.PcmSegments[0].Start; i < globals.PcmSegments[0].End; i += 2)
             {
                 high = Data[i];
                 low = Data[i + 1];
@@ -49,7 +57,7 @@ namespace PCMBinBuilder
             byte high;
             byte low;
 
-            for (uint i = StartAddr; i < EndAddr; i += 2)
+            for (uint i = StartAddr+2; i < EndAddr; i += 2)
             {
                 high = Data[i];
                 low = Data[i + 1];
@@ -64,27 +72,37 @@ namespace PCMBinBuilder
             uint Calculated = 0;
             uint FromFile = 0;
 
-            Logger("Calculating OS checksum", false);
+            Logger("Calculating OS checksum");
             Calculated = CalculateChecksumOS(buf);
             FromFile = (uint)((buf[0x500] << 8) | buf[0x501]);
             if (Calculated != FromFile)
             {
+                Logger("Fixing OS checksum: " + FromFile.ToString("X2") + " => " + Calculated.ToString("X2"));
                 buf[0x500] = (byte)((Calculated & 0xFF00) >> 8);
                 buf[0x501] = (byte)(Calculated & 0xFF);
             }
+            else
+            {
+                Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " OK");
+            }
             Logger("(OK)");
 
-            Logger("Calculating Segment checksums", false);
+            Logger("Calculating Segment checksums");
             for (int s = 2; s <= 8; s++)
             {
-                uint StartAddr = globals.PcmSegments[s].Start + 2;
+                uint StartAddr = globals.PcmSegments[s].Start;
                 uint EndAddr = globals.PcmSegments[s].End;
                 Calculated = CalculateChecksum(StartAddr, EndAddr, buf);
                 FromFile = (uint)((buf[StartAddr] << 8) | buf[StartAddr + 1]);
                 if (Calculated != FromFile)
                 {
+                    Logger("Fixing "+globals.PcmSegments[s].Name + " segment checksum: " + FromFile.ToString("X2") + " => " + Calculated.ToString("X2"));
                     buf[StartAddr] = (byte)((Calculated & 0xFF00) >> 8);
                     buf[StartAddr + 1] = (byte)(Calculated & 0xFF);
+                }
+                else
+                {
+                    Logger(globals.PcmSegments[s].Name + " checksum: " + buf[StartAddr].ToString("X1") + buf[StartAddr + 1].ToString("X1")+" OK");
                 }
             }
             Logger("(OK)");
@@ -113,37 +131,81 @@ namespace PCMBinBuilder
                     }
                     else if (globals.PcmSegments[s].GetFrom == "file")
                     {
+                        string OS1 = globals.GetOSid();
+                        string OS2 = globals.GetOsidFromFile(FileName);
+                        if (OS1 != OS2)
+                        {
+                            string err = "OS mismatch!" + Environment.NewLine;
+                            err += "file: " + globals.PcmSegments[1].SourceFile + " OS: " + OS1 + Environment.NewLine;
+                            err += "file: " + FileName + " OS: " + OS2 + Environment.NewLine; 
+                            throw new FileLoadException(err);
+                        }
+                            
                         globals.ReadSegmentFromBin(FileName, globals.PcmSegments[s].Start, globals.PcmSegments[s].End, ref buf);
                     }
                     //Check if readed segment have correct segment number in address start + 3
-                    if (buf[globals.PcmSegments[s].Start + 3] != s)
+                    uint SegNr = buf[globals.PcmSegments[s].Start + 3];
+                    if (SegNr != s)
                     {
-                        throw new FileLoadException(String.Format("Wrong segment number in file: {0}", FileName));
+                        throw new FileLoadException(String.Format("Wrong segment number {0} in file: {1}", SegNr.ToString(), FileName));
                     }
                 }
             }
         }
         private  void SetVinCode(ref byte[] buf)
         {
-            Logger("VIN code not implemted yet", true);
+            if (globals.NewVIN != "")
+            {
+                Logger("Setting VIN to: " + globals.NewVIN);
+                byte[] VINbytes = Encoding.ASCII.GetBytes(globals.NewVIN);
+                Array.Copy(VINbytes,0, buf, (globals.VINAddr + 33), 17);
+                Logger("(OK)");
+            }
+
         }
 
-        private  void AddPatches(ref byte[] buf)
+        private  void ApplyPatches(ref byte[] buf)
         {
-            Logger("Patches not implemented yet");
+            string line;
+
+            Logger("Applying patches");
+            foreach (globals.Patch P in globals.PatchList)
+            {
+                StreamReader sr = new StreamReader(P.FileName);
+                while ((line = sr.ReadLine()) != null )
+                {
+                    string tmp = Regex.Replace(line, "[^0-9:]", "");
+                    if (tmp != line)
+                        Logger("(Skip: '" + line+"')");
+                    else
+                    {
+                        string[] LineParts = line.Split(':');
+                        uint Addr = uint.Parse(LineParts[0]);
+                        uint Data = uint.Parse(LineParts[1]);
+                        if (Addr > globals.BinSize)
+                            throw new FileLoadException(String.Format("File: {0} Address {1} out of range!", P.FileName, Addr.ToString("X4")));
+                        if (Data > 0xff)
+                            throw new FileLoadException(String.Format("File: {0} Data {1} out of range!", P.FileName, Data.ToString("X4")));
+                        //Apply patchrow:
+                        Logger(Addr.ToString("X4") + ":" + Data.ToString("X4"));
+                        buf[Addr] = byte.Parse(LineParts[1]);
+                    }
+                }
+                sr.Close();
+
+            }
+            Logger("OK");
         }
 
-        private void FillEmptyArea(ref byte[] buf)
+        private void FillBuffer(ref byte[] buf)
         {
             Logger("Filling empty area");
-            for (uint i = (globals.PcmSegments[8].End + 1); i < (0x20000 - 1); i++)
+            for (uint i = 0; i < globals.BinSize; i++)
             {
                 buf[i] = 0x4A;
                 i++;
                 buf[i] = 0xFC;
             }
-            buf[globals.BinSize-2] = 0x4A;
-            buf[globals.BinSize-1] = 0xFC;
             Logger("(OK)");
         }
 
@@ -165,24 +227,11 @@ namespace PCMBinBuilder
             Logger("(OK)");
         }
 
-        public byte[] BuildBintoMem()
-        {
-            byte[] buf = new byte[globals.BinSize];
-
-            LoadOS(ref buf);
-            LoadCalSegments(ref buf);
-            SetVinCode(ref buf);
-            AddPatches(ref buf);
-            FillEmptyArea(ref buf);
-            return (buf);
-
-        }
-
         public void SaveBintoFile(byte[] buf)
         {
             string FileName = globals.SelectSaveFile();
             if (FileName.Length < 1)
-                return;
+                throw new Exception("User cancel");
             using (FileStream stream = new FileStream(FileName, FileMode.Create))
             {
                 using (BinaryWriter writer = new BinaryWriter(stream))
@@ -194,21 +243,29 @@ namespace PCMBinBuilder
 
         }
 
-        public void CreateBinary()
+        public Boolean CreateBinary()
         {
             try
             {
-                byte[] buf = BuildBintoMem();
+                byte[] buf = new byte[globals.BinSize];
+
+                FillBuffer(ref buf);
+                LoadOS(ref buf);
+                LoadCalSegments(ref buf);
+                SetVinCode(ref buf);
+                ApplyPatches(ref buf);
+                FixSchekSums(ref buf);
                 SaveBintoFile(buf);
                 Logger("Done");
                 BuildOK = true;
+                return true;
             }
             catch (Exception e)
             {
                 Logger("Error:", true);
                 Logger(e.Message);
                 BuildOK = false;
-                return;
+                return false;
             }
         }
         private void Logger(string LogText, Boolean newLine = true)
@@ -218,83 +275,111 @@ namespace PCMBinBuilder
                 txtStatus.AppendText(Environment.NewLine);
             Application.DoEvents();
         }
-        public void ExtractSegments()
+
+        public void ExtractSegments (string Fname, string Descr)
         {
-            string Fname = globals.SelectFile();
-            if (Fname.Length < 1)
-            {
-                Logger("No file selected");
-                return;
-
-            }
-
+            uint Fnr = 0;
             globals.GetPcmType(Fname);
             if (globals.PcmType == "Unknown")
             {
                 Logger("Unknown file");
-                return;
+                return ;
             }
 
-            FrmAsk frmA = new FrmAsk();
-            string Descr;
+            Logger("Reading segment addresses from file: " + Fname, false);
+            globals.GetSegmentAddresses(Fname);
+            globals.GetSegmentInfo(Fname);
+            Logger("(OK)");
 
-            frmA.TextBox1.Text = Path.GetFileName(Fname).Replace(".bin", "");
-            frmA.AcceptButton = frmA.btnOK;
-
-            // Show frmA as a modal dialog and determine if DialogResult = OK.
-            if (frmA.ShowDialog(this) == DialogResult.OK)
+            byte[] buf = globals.ReadBinFile(Fname);
+            string tmp = Path.Combine(Application.StartupPath, "OS", globals.PcmType + "-" + globals.GetOSid() + "-" + globals.GetOSVer());
+            string OsFile = tmp + ".ossegment1";
+            Fnr = 0;
+            while (File.Exists(OsFile))
             {
-                // Read the contents of frmA's TextBox.
-                Descr = frmA.TextBox1.Text;
+                Fnr++;
+                OsFile = tmp + "(" + Fnr.ToString() + ").ossegment1";
             }
-            else
+
+            Logger("Writing OS segments", false);
+            globals.WriteSegmentToFile(OsFile, globals.PcmSegments[1].Start, globals.PcmSegments[1].End, buf);
+            globals.WriteSegmentToFile(OsFile.Replace(".ossegment1", ".ossegment2"), globals.PcmSegments[0].Start, globals.PcmSegments[0].End, buf);
+            Logger("(OK)");
+
+            //EEprom Data:
+            //globals.WriteSegmentToFile(OsFile + ".eepromdata", globals.PcmSegments[9].Start, globals.PcmSegments[9].End, buf);
+
+            StreamWriter sw = new StreamWriter(OsFile + ".txt");
+            sw.WriteLine(Descr);
+            sw.Close();
+
+            Logger("Writing calibration segments", false);
+
+            for (int s = 2; s <= 9; s++)
             {
-                Descr = "";
-            }
-            frmA.Dispose();
-            try
-            {
-                Logger("Reading segment addresses from file: " + Fname,false);
-                globals.GetSegmentAddresses(Fname);
-                globals.GetSegmentInfo(Fname);
-                Logger("(OK)");
-
-                byte[] buf = globals.ReadBinFile(Fname);
-                string OsFile = globals.PcmType + "-" + globals.GetOSid() + "-" + globals.GetOSVer();
-                OsFile = Path.Combine(Application.StartupPath, "OS", OsFile);
-
-                Logger("Writing OS segments",false);
-                globals.WriteSegmentToFile(OsFile + ".ossegment1", globals.PcmSegments[1].Start, globals.PcmSegments[1].End, buf);
-                globals.WriteSegmentToFile(OsFile + ".ossegment2", globals.PcmSegments[0].Start, globals.PcmSegments[0].End, buf);
-                Logger("(OK)");
-
-                //EEprom Data:
-                //globals.WriteSegmentToFile(OsFile + ".eepromdata", globals.PcmSegments[9].Start, globals.PcmSegments[9].End, buf);
-
-                StreamWriter sw = new StreamWriter(OsFile + ".txt");
+                string SegFname = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) + ".calsegment";
+                Fnr = 0;
+                while (File.Exists(SegFname))
+                {
+                    Fnr++;
+                    SegFname = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) + "(" + Fnr.ToString() + ").calsegment";
+                }
+                globals.WriteSegmentToFile(SegFname, globals.PcmSegments[s].Start, globals.PcmSegments[s].End, buf);
+                sw = new StreamWriter(SegFname + ".txt");
                 sw.WriteLine(Descr);
                 sw.Close();
+            }
+            Logger("(OK)");
 
-                Logger("Writing calibration segments", false);
 
-                for (int s = 2; s <= 9; s++)
+        }
+        public void StartExtractSegments(Boolean Multi)
+        {
+            this.Show();
+            try
+            {
+                string Fname;
+                string Descr;
+                Fname = globals.SelectFile();
+                if (Fname.Length < 1)
                 {
-                    string SegFname = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) + ".calsegment";
-                    globals.WriteSegmentToFile(SegFname, globals.PcmSegments[s].Start, globals.PcmSegments[s].End, buf);
-                    sw = new StreamWriter(SegFname + ".txt");
-                    sw.WriteLine(Descr);
-                    sw.Close();
+                    Logger("No file selected");
+                    return;
+
                 }
-                Logger("(OK)");
+
+                FrmAsk frmA = new FrmAsk();
+
+                if (Multi)
+                {
+                    string BinFolder = Path.GetDirectoryName(Fname);
+                    DirectoryInfo d = new DirectoryInfo(BinFolder);
+                    FileInfo[] Files = d.GetFiles("*.bin");
+                    foreach (FileInfo file in Files)
+                    {
+                        ExtractSegments(file.FullName, file.Name.Replace(".bin", ""));
+                    }
+                }
+                else
+                {
+                    frmA.TextBox1.Text = Path.GetFileName(Fname).Replace(".bin", "");
+                    frmA.AcceptButton = frmA.btnOK;
+
+                    // Show frmA as a modal dialog and determine if DialogResult = OK.
+                    if (frmA.ShowDialog(this) != DialogResult.OK) {
+                        Logger("User cancel");
+                        return;
+                    }
+                    Descr = frmA.TextBox1.Text;
+                    frmA.Dispose();
+                    ExtractSegments(Fname, Descr);
+
+                }
+                Logger("Extract done");
 
             }
             catch (Exception e) { 
-                Logger(e.Message);
-            }
-            finally
-            {
-                Logger("Extract done");
-
+                Logger("Error: " + e.Message);
             }
 
         }

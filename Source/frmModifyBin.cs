@@ -37,14 +37,9 @@ namespace PCMBinBuilder
         private void btnApply_Click(object sender, EventArgs e)
         {
             frmAction frmA = new frmAction();
-            frmA.CreateBinary();
-            if (frmA.ShowDialog(this) == DialogResult.OK)
-            {
-                frmA.Dispose();
+            frmA.Show();
+            if (frmA.CreateBinary())
                 this.Close();
-            }
-            frmA.Dispose();
-
         }
 
         private void btnSwapSegments_Click(object sender, EventArgs e)
@@ -80,6 +75,7 @@ namespace PCMBinBuilder
             VinDialog.Text = "Enter VIN Code";
             VinDialog.label1.Text = "Enter VIN Code";
             VinDialog.AcceptButton = VinDialog.btnOK;
+            VinDialog.btnReadFromFile.Visible = true;
 
             // Show VinDialog as a modal dialog and determine if DialogResult = OK.
             if (VinDialog.ShowDialog(this) == DialogResult.OK)

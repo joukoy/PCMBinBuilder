@@ -45,5 +45,23 @@ namespace PCMBinBuilder
         {
 
         }
+
+        private void btnReadFromFile_Click(object sender, EventArgs e)
+        {
+            
+            try {
+                string VINfile = globals.SelectFile("Load VIN from file");
+                if (VINfile.Length > 1)
+                {
+                    TextBox1.Text = globals.ReadVIN(VINfile);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error");
+                return;
+            }
+
+        }
     }
 }

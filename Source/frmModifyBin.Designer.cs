@@ -90,9 +90,9 @@
             // 
             // btnApply
             // 
-            this.btnApply.Location = new System.Drawing.Point(799, 37);
+            this.btnApply.Location = new System.Drawing.Point(443, 39);
             this.btnApply.Name = "btnApply";
-            this.btnApply.Size = new System.Drawing.Size(83, 30);
+            this.btnApply.Size = new System.Drawing.Size(83, 26);
             this.btnApply.TabIndex = 10;
             this.btnApply.Text = "Save As...";
             this.btnApply.UseVisualStyleBackColor = true;
@@ -100,7 +100,7 @@
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(710, 39);
+            this.btnCancel.Location = new System.Drawing.Point(354, 39);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(83, 26);
             this.btnCancel.TabIndex = 11;
@@ -122,7 +122,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(894, 470);
+            this.ClientSize = new System.Drawing.Size(534, 470);
             this.Controls.Add(this.labelBinInfo);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnApply);
