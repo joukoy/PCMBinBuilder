@@ -102,9 +102,12 @@ namespace PCMBinBuilder
             listView1.Columns.Add("Patch");
             listView1.Columns[0].Width = 600;
             listView1.MultiSelect = true;
-            //listView1.CheckBoxes = true;
+            listView1.CheckBoxes = true;
 
             radioButton2.Checked = true;
+            radioButton3.Visible = false;
+            txtCalFile.Visible = false;
+            btnBrowse.Visible = false;
             string CalFolder = Path.Combine(Application.StartupPath, "Patches");
             DirectoryInfo d = new DirectoryInfo(CalFolder);
             
@@ -125,7 +128,6 @@ namespace PCMBinBuilder
         {
             if (radioButton2.Checked)
             {
-                radioButton3.Checked = false;
                 listView1.Enabled = true;
             }
             else
@@ -139,23 +141,16 @@ namespace PCMBinBuilder
         {
             if (radioButton3.Checked)
             {
-                radioButton2.Checked = false;
-                btnBrowseCalFile.Visible = true;
                 listView1.Enabled = false;
-                if (txtCalFile.TextLength > 0)
-                    btnOK.Enabled = true;
-                else
-                    btnOK.Enabled = false;
             }
             else
             {
                 listView1.Enabled = true;
-                btnBrowseCalFile.Visible = false;
             }
 
         }
 
-        private void button1_Click_1(object sender, EventArgs e)
+        private void btnBrowse_Click(object sender, EventArgs e)
         {
             radioButton3.Checked = true;
             string Fname = globals.SelectFile();
@@ -177,7 +172,7 @@ namespace PCMBinBuilder
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object sender, EventArgs e)
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
@@ -193,12 +188,12 @@ namespace PCMBinBuilder
         {
             if (labelSelectOS.Text=="Select patches")
             {
-                for (int i = 0; i < listView1.SelectedItems.Count; i++)
+                for (int i = 0; i < listView1.CheckedItems.Count; i++)
                 {
                     globals.Patch P;
-                    P.Name = listView1.SelectedItems[i].Text;
-                    P.Description = listView1.SelectedItems[i].SubItems[0].Text;
-                    P.FileName = listView1.SelectedItems[i].Tag.ToString();
+                    P.Name = listView1.CheckedItems[i].Text;
+                    P.Description = listView1.CheckedItems[i].SubItems[0].Text;
+                    P.FileName = listView1.CheckedItems[i].Tag.ToString();
                     globals.PatchList.Add(P);
                     
                 }
@@ -209,23 +204,41 @@ namespace PCMBinBuilder
 
                     if (listView1.SelectedItems.Count > 0)
                     {
-                        globals.PcmSegments[SegNr].GetFrom = "cal";
                         globals.PcmSegments[SegNr].Source = listView1.SelectedItems[0].Text;
-                        globals.PcmSegments[SegNr].SourceFile = listView1.SelectedItems[0].Tag.ToString();
+                        frmAction frmA = new frmAction();
+                        frmA.Show(this);
+                        if (SegNr > 1) //CAL segments
+                            frmA.LoadCalSegment(SegNr, listView1.SelectedItems[0].Tag.ToString());
+                        else
+                            frmA.LoadOS(listView1.SelectedItems[0].Tag.ToString());
                     }
+                    else
+                        return;
                 }
                 else if (radioButton3.Checked)
                 {
-                    globals.PcmSegments[SegNr].GetFrom = "file";
                     globals.PcmSegments[SegNr].Source = txtCalFile.Text;
-                    globals.PcmSegments[SegNr].SourceFile = txtCalFile.Text;
+                    frmAction frmA = new frmAction();
+                    frmA.Show(this);
+                    if (SegNr > 1) //CAL segments
+                    {
+                        if (!frmA.LoadCalSegment(SegNr, txtCalFile.Text))
+                            return;
+                    }
+                    else { 
+                        if (!frmA.LoadOS(txtCalFile.Text))
+                           return;
+                    }
+
                 }
             }
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
 
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        
+
+/*        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count > 0 && radioButton2.Checked)
                 btnOK.Enabled = true;
@@ -233,5 +246,16 @@ namespace PCMBinBuilder
                 btnOK.Enabled = false;
 
         }
+        private void listView1_Click(object sender, EventArgs e)
+        {
+            if (radioButton2.Checked) { 
+                if (listView1.SelectedItems.Count > 0 || listView1.CheckedItems.Count > 0) 
+                    btnOK.Enabled = true;
+                else
+                    btnOK.Enabled = false;
+            }
+
+        }
+*/
     }
-    }
+}

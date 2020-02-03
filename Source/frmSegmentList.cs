@@ -24,11 +24,7 @@ namespace PCMBinBuilder
 
         public void StartBuilding()
         {
-            string Fname;
             labelOS.Text = globals.PcmSegments[1].Source;
-            Fname = globals.PcmSegments[1].SourceFile;
-            globals.GetPcmType(Fname);
-            globals.GetSegmentAddresses(Fname);
             int i = 1;
             for (int s = 2; s <= 9; s++)
             {
@@ -79,8 +75,6 @@ namespace PCMBinBuilder
             frm2.Tag = 30;
             frm2.LoadPatches();
 
-            //frm2.ShowDialog();
-
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
                 button.Text = "Patches selected";
@@ -88,28 +82,7 @@ namespace PCMBinBuilder
             frm2.Dispose();
 
         }
-
         
-
-        private void VINReadButton_Click(object sender, EventArgs e)
-        {
-            string VINFile = globals.SelectFile("Load VIN from file");
-            if (VINFile.Length > 1)
-            {
-                string VIN = globals.ReadVIN(VINFile);
-                if (VIN != "")
-                {
-                    for (int i = 0; i < this.Controls.Count; i++)
-                        if (this.Controls[i].Tag != null && (int)this.Controls[i].Tag == 20)
-                        {
-                            globals.NewVIN = VIN;
-                            this.Controls[i].Text = "VIN: " + VIN;
-                        }
-                }
-            }
-
-        }
-
         private void VINButton_Click(object sender, EventArgs e)
         {
             FrmAsk VinDialog = new FrmAsk();
@@ -155,7 +128,7 @@ namespace PCMBinBuilder
             //MessageBox.Show(button.Tag.ToString());
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnApply_Click(object sender, EventArgs e)
         {
             if (this.Text == "Select segments to swap")
             { 
@@ -175,13 +148,11 @@ namespace PCMBinBuilder
 
                 }
                 frmAction frmA = new frmAction();
-                frmA.CreateBinary();
-                if (frmA.ShowDialog(this) == DialogResult.OK)
+                frmA.Show(this);
+                if (frmA.CreateBinary()) 
                 {
-                    frmA.Dispose();
                     this.Close();
                 }
-                frmA.Dispose();
             }
 
         }

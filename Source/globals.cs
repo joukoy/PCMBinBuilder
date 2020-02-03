@@ -12,13 +12,10 @@ internal class globals
         public string Name;
         public uint PN;
         public string Ver;
-        //public ushort CheckSum;
         public uint Start;
-        public uint End;
-        //public byte[] Data;
-        public string GetFrom;
+        public uint Length;
+        public byte[] Data;
         public string Source;
-        public string SourceFile;
     }
 
     public struct Patch
@@ -35,9 +32,7 @@ internal class globals
     public static uint BinSize = 0;
     public static string VIN="";
     public static string NewVIN="";
-    //public static List<string> PatchList;
     public static List<Patch> PatchList;
-    //public static byte[] BinBuffer;
 
     public static void InitializeMe()
     {
@@ -94,21 +89,95 @@ internal class globals
 
     }
 
-    public static string SelectFolder()
+    public static  uint CalculateChecksumOS(byte[] Data)
     {
-        using (var fbd = new FolderBrowserDialog())
+        uint sum = 0;
+        byte high;
+        byte low;
+
+        //OS Segment 0
+        for (uint i = 0; i < 0x4FF; i += 2)
         {
-            DialogResult result = fbd.ShowDialog();
-
-            if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
-            {
-                string[] files = Directory.GetFiles(fbd.SelectedPath);
-
-                System.Windows.Forms.MessageBox.Show("Files found: " + files.Length.ToString(), "Message");
-            }
+            high = Data[i];
+            low = Data[i + 1];
+            sum = (uint)(sum + ((high << 8) | low));
         }
-        return "";
+        //OS Segment 1
+        for (uint i = 0x502; i < 0x3FFF; i += 2)
+        {
+            high = Data[i];
+            low = Data[i + 1];
+            sum = (uint)(sum + ((high << 8) | low));
+        }
+        //OS Segment 2
+        for (uint i = globals.PcmSegments[0].Start; i < globals.PcmSegments[0].Start + globals.PcmSegments[0].Length - 1; i += 2)
+        {
+            high = Data[i];
+            low = Data[i + 1];
+            sum = (uint)(sum + ((high << 8) | low));
+        }
+
+        sum = (sum & 0xFFFF);
+        return (65536 - sum) & 0xFFFF;
     }
+
+    public static uint CalculateChecksum(uint StartAddr, uint Length, byte[] Data)
+    {
+        uint sum = 0;
+        byte high;
+        byte low;
+        uint EndAddr = StartAddr + Length - 1;
+
+        for (uint i = StartAddr + 2; i < EndAddr; i += 2)
+        {
+            high = Data[i];
+            low = Data[i + 1];
+            sum = (uint)(sum + ((high << 8) | low));
+        }
+        sum = (sum & 0xFFFF);
+        return (65536 - sum) & 0xFFFF;
+    }
+
+    public static string GetChecksumStatus(string Fname)
+    {
+        uint Calculated = 0;
+        uint FromFile = 0;
+        string Result = "";
+
+        byte[] buf = ReadBin(Fname, 0, BinSize);
+        Calculated = globals.CalculateChecksumOS(buf);
+        FromFile = (uint)((buf[0x500] << 8) | buf[0x501]);
+        if (Calculated == FromFile)
+        {
+            Result = "OS:".PadRight(12)  + "Bin Checksum: " + FromFile.ToString("X2") + " * Calculated: " + Calculated.ToString("X2") + " [OK]";
+            //Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " OK");
+        }
+        else
+        {
+            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X2") + " * Calculated: " + Calculated.ToString("X2") + " [FAIL]";
+        }
+
+        Result += Environment.NewLine;
+
+        for (int s = 2; s <= 8; s++)
+        {
+            uint StartAddr = globals.PcmSegments[s].Start;
+            uint Length = globals.PcmSegments[s].Length;
+            Calculated = globals.CalculateChecksum(StartAddr, Length, buf);
+            FromFile = (uint)((buf[StartAddr] << 8) | buf[StartAddr + 1]);
+            if (Calculated == FromFile)
+            {
+                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X2") + " * Calculated: " + Calculated.ToString("X2") + " [OK]";
+            }
+            else
+            {
+                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X2") + " * Calculated: " + Calculated.ToString("X2") + " [FAIL]";
+            }
+            Result += Environment.NewLine;
+        }
+        return Result;
+    }
+
     public static string GetOSid()
     {
         return PcmSegments[1].PN.ToString();
@@ -168,6 +237,7 @@ internal class globals
             Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].PN.ToString() + " Version: " + globals.PcmSegments[i].Ver + Environment.NewLine;
         }
         Finfo += "VIN".PadRight(20) + globals.ReadVIN(Fname) + Environment.NewLine + Environment.NewLine;
+        Finfo += GetChecksumStatus(Fname);
         return Finfo;
     }
 
@@ -175,12 +245,12 @@ internal class globals
     {
         PcmType = "Unknown";
         long fsize = new System.IO.FileInfo(FileName).Length;
-        if (fsize >= (1024 * 1024) || (FileName.Contains(".ossegment") && FileName.Contains("P59-")))
+        if (fsize >= (1024 * 1024) || (FileName.EndsWith(".ossegment1") && FileName.Contains("OS\\P59-")))
         { 
             PcmType = "P59";
             BinSize = 1024 * 1024;
         }
-        else if(fsize == (512 * 1024) || (FileName.Contains(".ossegment") && FileName.Contains("P01-"))) { 
+        else if(fsize == (512 * 1024) || (FileName.EndsWith(".ossegment1") && FileName.Contains("OS\\P01-"))) { 
             PcmType = "P01";
             BinSize = 512 * 1024;
         }
@@ -214,15 +284,15 @@ internal class globals
 
                 //OS Segments:
                 PcmSegments[1].Start = 0;
-                PcmSegments[1].End = 0x3FFF;
+                PcmSegments[1].Length = 0x4000;
                 PcmSegments[0].Start = 0x020000;
                 if (PcmType == "P01")
-                    PcmSegments[0].End = 0x07FFFD;
+                    PcmSegments[0].Length = 0x5FFFE;
                 else
-                    PcmSegments[0].End = 0x0FFFFD;
+                    PcmSegments[0].Length = 0xDFFFE;
                 //EEprom Data:
                 PcmSegments[9].Start = 0x4000;
-                PcmSegments[9].End = 0x8000;
+                PcmSegments[9].Length = 0x4000;
 
                 reader.BaseStream.Seek(0x504, 0);
                 PcmSegments[1].PN = reader.ReadUInt32BE();
@@ -235,7 +305,7 @@ internal class globals
                 for (int i=2; i<=8;i++)
                 {
                     PcmSegments[i].Start = reader.ReadUInt32BE();
-                    PcmSegments[i].End = reader.ReadUInt32BE();
+                    PcmSegments[i].Length = reader.ReadUInt32BE() - PcmSegments[i].Start + 1;
                 }
 
                 reader.BaseStream.Close();
@@ -278,7 +348,6 @@ internal class globals
     public static void GetEEpromInfo(string Fname)
     {
         byte[] Buf = new byte[4];
-        //uint HWAddr = 0;
 
         using (BinaryReader reader = new BinaryReader(File.Open(Fname, FileMode.Open)))
         {
@@ -304,16 +373,17 @@ internal class globals
         }
     }
 
-    public static byte[] ReadBinFile(string FileName)
+    public static byte[] ReadBin(string FileName,uint FileOffset, uint Length)
     {
-        long fsize = new System.IO.FileInfo(FileName).Length;
-        byte[] buf = new byte[fsize];
+        
+        byte[] buf = new byte[Length];
 
         long offset = 0;
-        long remaining = fsize;
+        long remaining = Length;
 
         using (BinaryReader freader = new BinaryReader(File.Open(FileName, FileMode.Open)))
         {
+            freader.BaseStream.Seek(FileOffset, 0);
             while (remaining > 0)
             {
                 int read = freader.Read(buf, (int)offset, (int)remaining);
@@ -327,57 +397,16 @@ internal class globals
         }
         return buf;
     }
-    public static void ReadSegmentFromBin(string FileName, uint StartAddress, uint EndAddress, ref byte[] Buffer)
-    {
 
-        long offset = StartAddress;
-        long remaining = (EndAddress - StartAddress);
 
-        using (BinaryReader freader = new BinaryReader(File.Open(FileName, FileMode.Open)))
-        {
-            freader.BaseStream.Seek(StartAddress, 0);
-            while (remaining > 0)
-            {
-                int read = freader.Read(Buffer, (int)offset, (int)remaining);
-                if (read <= 0)
-                    throw new EndOfStreamException
-                        (String.Format("End of stream reached with {0} bytes left to read", remaining));
-                remaining -= read;
-                offset += read;
-            }
-            freader.Close();
-        }
-
-    }
-    public static void ReadSegmentFile(string FileName, uint StartAddress, uint EndAddress, ref byte[] Buffer)
-    {
-
-        long offset = StartAddress;
-        long remaining = (EndAddress - StartAddress);
-
-        using (BinaryReader freader = new BinaryReader(File.Open(FileName, FileMode.Open)))
-        {
-            while (remaining > 0)
-            {
-                int read = freader.Read(Buffer, (int)offset, (int)remaining);
-                if (read <= 0)
-                    throw new EndOfStreamException
-                        (String.Format("File: {0}, End of stream reached with {0} bytes left to read", FileName, remaining));
-                remaining -= read;
-                offset += read;
-            }
-            freader.Close();
-        }        
-    }
-
-    public static void WriteSegmentToFile(string Fname, uint StartAddr, uint EndAddr, byte[] Buf)
+    public static void WriteSegmentToFile(string Fname, uint StartAddr, uint Length, byte[] Buf)
     {
 
         using (FileStream stream = new FileStream(Fname, FileMode.Create))
         {            
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                writer.Write(Buf, (int)StartAddr, (int)(EndAddr-StartAddr));
+                writer.Write(Buf, (int)StartAddr, (int)Length);
                 writer.Close();
             }
         }
@@ -389,9 +418,8 @@ internal class globals
     {
         for (int s= 0; s < MaxSeg;s++)
         {
-            PcmSegments[s].GetFrom = "";
             PcmSegments[s].Source = "";
-            PcmSegments[s].SourceFile = "";
+            PcmSegments[s].Data = null;
         }
         PatchList = new List<Patch>();
         NewVIN = "";

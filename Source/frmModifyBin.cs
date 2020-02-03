@@ -26,12 +26,13 @@ namespace PCMBinBuilder
             string Fname = globals.SelectFile();
             if (Fname.Length < 1)
                 return;
+            globals.PcmSegments[1].Source = Fname;
+            frmAction frmA = new frmAction();
+            frmA.Show(this);
+            if (!frmA.LoadOS(Fname))
+               return;
             labelBaseFile.Text = Fname;
             labelBinInfo.Text = globals.PcmFileInfo(Fname);
-            globals.PcmSegments[1].Source = Fname;
-            globals.PcmSegments[1].SourceFile = Fname;
-            globals.PcmSegments[1].GetFrom = "file";
-
         }
 
         private void btnApply_Click(object sender, EventArgs e)

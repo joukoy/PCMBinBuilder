@@ -18,10 +18,11 @@ namespace PCMBinBuilder
         }
 
 
-        private void button3_Click(object sender, EventArgs e)
+        private void btnCreatePatch_Click(object sender, EventArgs e)
         {
             globals.CleanMe();
-            FrmPatcher frm2 = new FrmPatcher();            
+            FrmPatcher frm2 = new FrmPatcher();
+            frm2.addCheckBoxes();
             frm2.Show(this);
 
         }
@@ -32,12 +33,13 @@ namespace PCMBinBuilder
             globals.InitializeMe();
         }
 
-    private void button5_Click(object sender, EventArgs e)
+    private void btnFileInfo_Click(object sender, EventArgs e)
         {
             globals.CleanMe();
             string Fname = globals.SelectFile();
             if (Fname.Length < 1)
                 return;
+            globals.GetPcmType(Fname);
             globals.GetSegmentAddresses(Fname);
 
             FrmFileinfo frmX = new FrmFileinfo();
@@ -47,7 +49,7 @@ namespace PCMBinBuilder
             frmX.labelFileInfo.Text = Finfo;
         }
 
-        private void button6_Click(object sender, EventArgs e)
+        private void btnBuildBin_Click(object sender, EventArgs e)
         {
             globals.CleanMe();
             FrmSelectSegment frm2 = new FrmSelectSegment();
@@ -65,7 +67,7 @@ namespace PCMBinBuilder
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnModifyBin_Click(object sender, EventArgs e)
         {
             globals.CleanMe();
             FrmModBin FrmB = new FrmModBin();

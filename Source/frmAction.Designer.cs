@@ -34,7 +34,7 @@
             // 
             // btnClose
             // 
-            this.btnClose.Location = new System.Drawing.Point(235, 407);
+            this.btnClose.Location = new System.Drawing.Point(235, 416);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(92, 31);
             this.btnClose.TabIndex = 0;
@@ -44,10 +44,11 @@
             // 
             // txtStatus
             // 
-            this.txtStatus.Location = new System.Drawing.Point(10, 9);
+            this.txtStatus.Location = new System.Drawing.Point(2, 3);
             this.txtStatus.Multiline = true;
             this.txtStatus.Name = "txtStatus";
-            this.txtStatus.Size = new System.Drawing.Size(544, 380);
+            this.txtStatus.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.txtStatus.Size = new System.Drawing.Size(559, 407);
             this.txtStatus.TabIndex = 1;
             // 
             // frmAction
@@ -58,7 +59,7 @@
             this.Controls.Add(this.txtStatus);
             this.Controls.Add(this.btnClose);
             this.Name = "frmAction";
-            this.Text = "Working...";
+            this.Text = "PCM bin builder";
             this.Load += new System.EventHandler(this.frmAction_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
