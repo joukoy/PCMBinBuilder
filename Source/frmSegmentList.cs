@@ -24,7 +24,7 @@ namespace PCMBinBuilder
 
         public void StartBuilding()
         {
-            labelOS.Text = globals.PcmSegments[1].Source;
+            labelOS.Text = globals.GetOSid() + " " + globals.GetOSVer();
             int i = 1;
             for (int s = 2; s <= 9; s++)
             {
@@ -121,7 +121,9 @@ namespace PCMBinBuilder
 
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
-                button.Text = globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].Source;
+
+                //button.Text = globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].Source;
+                button.Text = globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].PN.ToString() + " " + globals.PcmSegments[SegNr].Ver;
             }
             frm2.Dispose();
 
@@ -157,5 +159,6 @@ namespace PCMBinBuilder
 
         }
 
+        
     }
 }

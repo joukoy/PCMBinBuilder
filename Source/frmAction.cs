@@ -36,9 +36,8 @@ namespace PCMBinBuilder
             }
             else
             {
-                Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " OK");
+                Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " [OK]");
             }
-            Logger("(OK)");
 
             Logger("Calculating Segment checksums");
             for (int s = 2; s <= 8; s++)
@@ -55,10 +54,9 @@ namespace PCMBinBuilder
                 }
                 else
                 {
-                    Logger(globals.PcmSegments[s].Name + " checksum: " + buf[StartAddr].ToString("X1") + buf[StartAddr + 1].ToString("X1")+" OK");
+                    Logger(globals.PcmSegments[s].Name + " checksum: " + buf[StartAddr].ToString("X1") + buf[StartAddr + 1].ToString("X1")+" [OK]");
                 }
             }
-            Logger("(OK)");
         }
 
         private  void ApplySegments(ref byte[] buf)
@@ -76,33 +74,76 @@ namespace PCMBinBuilder
         {
             try
             {
-                if (FileName.EndsWith("ossegment1")) //Get OS from segment files
+                long fsize = new System.IO.FileInfo(FileName).Length;
+                string FileName2 = "";
+                byte[] tmpData;
+                byte[] tmpData2;
+
+                if (fsize == 0x4000) //OS Segment1 size
                 {
                     Logger("Loading OS segment 1");
                     globals.GetPcmType(FileName);
+                    if (globals.PcmType == "Unknown")
+                    {
+                        DialogResult Res = MessageBox.Show("P59 (1MB) = YES\nP01(512kB) = NO", "PCM Type P59?", MessageBoxButtons.YesNoCancel);
+                        if (Res == DialogResult.Cancel)
+                            throw new Exception("User cancel");
+                        if (Res == DialogResult.Yes)
+                        {
+                            globals.PcmType = "P59";
+                            globals.BinSize = 1024 * 1024;
+                        }
+                        if (Res == DialogResult.No)
+                        {
+                            globals.PcmType = "P01";
+                            globals.BinSize = 512 * 1024;
+                        }
+
+                    }
                     globals.GetSegmentAddresses(FileName);
-                    long fsize = new System.IO.FileInfo(FileName).Length;
-                    if (fsize != globals.PcmSegments[1].Length)
-                        throw new FileLoadException("File: " + FileName + " size: " +fsize.ToString() + "Expected: " + globals.PcmSegments[1].Length.ToString());                    
-                    globals.PcmSegments[1].Data = globals.ReadBin(FileName, 0, globals.PcmSegments[1].Length);
+
+                    tmpData = globals.ReadBin(FileName, 0, (uint)fsize);
+
+                    if (FileName.EndsWith("ossegment1")) //Get OS from segment files
+                    {
+                        FileName2 = FileName.Replace(".ossegment1", ".ossegment2");
+                    }
+                    else
+                    {
+                        FileName2 = globals.SelectFile("Select OS segment 2", true);
+                        if (FileName2.Length < 1)
+                            throw new FileLoadException("user cancel");
+                    }
+
                     Logger("Loading OS segment 2");
-                    string FileName2 = FileName.Replace(".ossegment1", ".ossegment2");
                     fsize = new System.IO.FileInfo(FileName2).Length;
-                    if (fsize != globals.PcmSegments[1].Length)
-                        throw new FileLoadException("File: " + FileName2 + " size: " + fsize.ToString() + "Expected: " + globals.PcmSegments[1].Length.ToString());
-                    globals.PcmSegments[0].Data = globals.ReadBin(FileName2, 0, globals.PcmSegments[0].Length);
+                    if (fsize != globals.PcmSegments[0].Length)
+                    {
+                        string Msg = "Error: " + Environment.NewLine + "File: " + FileName2 + " size: " + fsize.ToString() + Environment.NewLine;
+                        Msg += "Should be: " + globals.PcmSegments[0].Length.ToString();
+                        throw new FileLoadException(Msg);
+                    }
+                    tmpData2 = globals.ReadBin(FileName2, 0, globals.PcmSegments[0].Length);
+
+                    globals.PcmSegments[1].Data = new byte[0x4000];
+                    globals.PcmSegments[0].Data = new byte[globals.PcmSegments[0].Length];
+                    Array.Copy(tmpData, 0, globals.PcmSegments[1].Data, 0, globals.PcmSegments[1].Length); //OS1
+                    Array.Copy(tmpData2, 0, globals.PcmSegments[0].Data, 0, globals.PcmSegments[0].Length); //OS2
                 }
-                else //Get full binary file as OS
+                else if (fsize == (512*1024) || fsize == (1024*1024)) //Full binary
                 {
+                    globals.GetPcmType(FileName);
+                    globals.GetSegmentAddresses(FileName);
                     Logger("Loading OS file: " + FileName);
-                    long fsize = new System.IO.FileInfo(FileName).Length;
-                    if (fsize != (long)(512 * 1024) && fsize != (long)(1024 * 1024))
-                        throw new FileLoadException("Incorrect file size,  file: " + FileName + " Size: " + fsize.ToString());
                     globals.PcmSegments[1].Data = globals.ReadBin(FileName, 0, (uint)fsize);
                 }
-                globals.GetPcmType(FileName);
-                globals.GetSegmentAddresses(FileName);
-                Logger("(OK)");
+                else
+                {
+                    string Msg = "Error:" + Environment.NewLine + "File: " + FileName + " size: " + fsize.ToString() + Environment.NewLine ;
+                    Msg +=  "Should be: 16384 bytes, 512kB or 1MB";
+                    throw new FileLoadException(Msg);
+                }
+                Logger("[OK]");
                 this.Close();
                 return true;
             }
@@ -118,18 +159,15 @@ namespace PCMBinBuilder
             try { 
                 Logger("Reading " + globals.PcmSegments[SegNr].Name + " from " + FileName);
                 uint SegSize = globals.PcmSegments[SegNr].Length;
-                if (FileName.EndsWith(".calsegment"))
-                {
-                    long fsize = new System.IO.FileInfo(FileName).Length;
-                    
-                    if (fsize != SegSize)
-                    {
+                long fsize = new System.IO.FileInfo(FileName).Length;
+                byte[] tmpData;
 
-                        throw new FileLoadException(String.Format("{0} File size = {1}, Expected =  {2}", FileName, fsize, SegSize));
-                    }
-                    globals.PcmSegments[SegNr].Data = globals.ReadBin(FileName, 0, SegSize);
+                if (fsize == SegSize)
+                {                     
+                    tmpData = globals.ReadBin(FileName, 0, SegSize);
                 }
-                else //Read from full binary
+                
+                else if (fsize == globals.BinSize)
                 {
                     string OS1 = globals.GetOSid();
                     string OS2 = globals.GetOsidFromFile(FileName);
@@ -140,15 +178,33 @@ namespace PCMBinBuilder
                         err += "file: " + FileName + Environment.NewLine + "OS: " + OS2 + Environment.NewLine;
                         throw new FileLoadException(err);
                     }
-                    globals.PcmSegments[SegNr].Data = globals.ReadBin(FileName, globals.PcmSegments[SegNr].Start, SegSize);
+                    tmpData = globals.ReadBin(FileName, globals.PcmSegments[SegNr].Start, SegSize);
                 }
+                else
+                {
+                    string Msg = "Error: " + Environment.NewLine;
+                    Msg += FileName + " file size = " + fsize.ToString() +" bytes" + Environment.NewLine;
+                    Msg += "Should be: "  + SegSize.ToString() + " or " + globals.BinSize.ToString() + " bytes";
+                    throw new FileLoadException(Msg);
+                }
+                    
                 //Check if readed segment have correct segment number in address start + 3
-                uint FileSegNr = globals.PcmSegments[SegNr].Data[3];
+                uint FileSegNr = tmpData[3];
                 if (FileSegNr != SegNr)
                 {
-                    throw new FileLoadException(String.Format("Wrong segment number: {0} in file: {1}", FileSegNr.ToString(), FileName));
+                    string Msg = "Error: " + Environment.NewLine;
+                    Msg += "Wrong segment number: " + FileSegNr.ToString() + "in file: " + FileName;
+                    throw new FileLoadException(Msg);
                 }
-                Logger ("(OK)");
+                globals.PcmSegments[SegNr].Data = new byte[SegSize];
+                Array.Copy(tmpData, 0, globals.PcmSegments[SegNr].Data,0,SegSize);
+
+                globals.PcmSegments[SegNr].PN = (uint)((tmpData[4] <<24)|(tmpData[5] << 16)|(tmpData[6] << 8) | (tmpData[7]));
+                byte[] Buf = new byte[2];
+                Buf[0] = tmpData[8];
+                Buf[1] = tmpData[9];
+                globals.PcmSegments[SegNr].Ver = System.Text.Encoding.ASCII.GetString(Buf);
+                Logger("[OK]");
                 this.Close();
                 return true;
             }
@@ -166,7 +222,7 @@ namespace PCMBinBuilder
                 Logger("Setting VIN to: " + globals.NewVIN);
                 byte[] VINbytes = Encoding.ASCII.GetBytes(globals.NewVIN);
                 Array.Copy(VINbytes,0, buf, (globals.VINAddr + 33), 17);
-                Logger("(OK)");
+                Logger("[OK]");
             }
 
         }
@@ -229,7 +285,7 @@ namespace PCMBinBuilder
                 i++;
                 buf[i] = 0xFC;
             }
-            Logger("(OK)");
+            Logger("[OK]");
         }
 
         public Boolean CreateBinary()
@@ -277,7 +333,7 @@ namespace PCMBinBuilder
             Logger("Reading segment addresses from file: " + Fname, false);
             globals.GetSegmentAddresses(Fname);
             globals.GetSegmentInfo(Fname);
-            Logger("(OK)");
+            Logger("[OK]");
 
             long fsize = new System.IO.FileInfo(Fname).Length;
             if (fsize != (long)(512 * 1024) && fsize != (long)(1024 * 1024))
@@ -296,7 +352,7 @@ namespace PCMBinBuilder
             Logger("Writing OS segments", false);
             globals.WriteSegmentToFile(OsFile, globals.PcmSegments[1].Start, globals.PcmSegments[1].Length, buf);
             globals.WriteSegmentToFile(OsFile.Replace(".ossegment1", ".ossegment2"), globals.PcmSegments[0].Start, globals.PcmSegments[0].Length, buf);
-            Logger("(OK)");
+            Logger("[OK]");
 
 
             //Write description to file
@@ -320,7 +376,7 @@ namespace PCMBinBuilder
                 sw.WriteLine(Descr);
                 sw.Close();
             }
-            Logger("(OK)");
+            Logger("[OK]");
 
 
         }
@@ -384,6 +440,11 @@ namespace PCMBinBuilder
         }
 
         private void frmAction_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtStatus_TextChanged(object sender, EventArgs e)
         {
 
         }

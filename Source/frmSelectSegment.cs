@@ -153,7 +153,7 @@ namespace PCMBinBuilder
         private void btnBrowse_Click(object sender, EventArgs e)
         {
             radioButton3.Checked = true;
-            string Fname = globals.SelectFile();
+            string Fname = globals.SelectFile("Load segment from file",true);
             if (Fname.Length > 1)
             {
                 txtCalFile.Text = Fname;

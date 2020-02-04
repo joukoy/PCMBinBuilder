@@ -40,6 +40,11 @@ namespace PCMBinBuilder
             if (Fname.Length < 1)
                 return;
             globals.GetPcmType(Fname);
+            if(globals.PcmType == "Unknown")
+            {
+                MessageBox.Show("Unknown file", "Unknown file");
+                return;
+            }
             globals.GetSegmentAddresses(Fname);
 
             FrmFileinfo frmX = new FrmFileinfo();

@@ -108,5 +108,16 @@ namespace PCMBinBuilder
             }
 
         }
+
+        private void btnFixCheckSums_Click(object sender, EventArgs e)
+        {
+            frmAction frmA = new frmAction();
+            frmA.Show(this);
+            frmA.FixSchekSums(ref globals.PcmSegments[1].Data);
+            labelBinInfo.Text = globals.PcmFileInfo(labelBaseFile.Text);
+            labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
+            labelBinInfo.Text += globals.GetModifications();
+
+        }
     }
 }

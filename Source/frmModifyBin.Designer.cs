@@ -36,6 +36,7 @@
             this.btnApply = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.labelBinInfo = new System.Windows.Forms.Label();
+            this.btnFixCheckSums = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -100,7 +101,7 @@
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(354, 39);
+            this.btnCancel.Location = new System.Drawing.Point(443, 71);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(83, 26);
             this.btnCancel.TabIndex = 11;
@@ -118,11 +119,22 @@
             this.labelBinInfo.TabIndex = 12;
             this.labelBinInfo.Text = "BIN Info";
             // 
+            // btnFixCheckSums
+            // 
+            this.btnFixCheckSums.Location = new System.Drawing.Point(327, 39);
+            this.btnFixCheckSums.Name = "btnFixCheckSums";
+            this.btnFixCheckSums.Size = new System.Drawing.Size(90, 27);
+            this.btnFixCheckSums.TabIndex = 13;
+            this.btnFixCheckSums.Text = "Fix Checksums";
+            this.btnFixCheckSums.UseVisualStyleBackColor = true;
+            this.btnFixCheckSums.Click += new System.EventHandler(this.btnFixCheckSums_Click);
+            // 
             // FrmModBin
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(534, 470);
+            this.Controls.Add(this.btnFixCheckSums);
             this.Controls.Add(this.labelBinInfo);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnApply);
@@ -149,5 +161,6 @@
         private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label labelBinInfo;
+        private System.Windows.Forms.Button btnFixCheckSums;
     }
 }

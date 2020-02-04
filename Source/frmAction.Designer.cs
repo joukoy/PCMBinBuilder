@@ -50,6 +50,7 @@
             this.txtStatus.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtStatus.Size = new System.Drawing.Size(559, 407);
             this.txtStatus.TabIndex = 1;
+            this.txtStatus.TextChanged += new System.EventHandler(this.txtStatus_TextChanged);
             // 
             // frmAction
             // 

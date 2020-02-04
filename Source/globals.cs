@@ -58,12 +58,15 @@ internal class globals
         PatchList = new List<Patch>();
 
     }
-    public static string SelectFile(string Title = "Select bin file")
+    public static string SelectFile(string Title = "Select bin file", Boolean Allfiles=false)
     {
 
         OpenFileDialog fdlg = new OpenFileDialog();
         fdlg.Title = Title;
-        fdlg.Filter = "BIN files (*.bin)|*.bin|All files (*.*)|*.*";
+        if (Allfiles)
+            fdlg.Filter = "All files (*.*)|*.*|BIN files (*.bin)|*.bin";        
+        else
+            fdlg.Filter = "BIN files (*.bin)|*.bin|All files (*.*)|*.*";
         fdlg.FilterIndex = 1;
         fdlg.RestoreDirectory = true;
         if (fdlg.ShowDialog() == DialogResult.OK)
@@ -138,13 +141,12 @@ internal class globals
         return (65536 - sum) & 0xFFFF;
     }
 
-    public static string GetChecksumStatus(string Fname)
+    public static string GetChecksumStatus(byte[] buf)
     {
         uint Calculated = 0;
         uint FromFile = 0;
         string Result = "";
 
-        byte[] buf = ReadBin(Fname, 0, BinSize);
         Calculated = globals.CalculateChecksumOS(buf);
         FromFile = (uint)((buf[0x500] << 8) | buf[0x501]);
         if (Calculated == FromFile)
@@ -206,10 +208,10 @@ internal class globals
         
         for (int i = 2; i <= 9; i++)
         {
-            if (globals.PcmSegments[i].Source != "")
+            if (PcmSegments[i].Source != "")
             {
-                Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].Source + Environment.NewLine;
-                //Finfo += " =>  " + globals.PcmSegments[i].Source + Environment.NewLine;
+                //Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].Source + Environment.NewLine;
+                Finfo += PcmSegments[i].Name.PadRight(20) + PcmSegments[i].PN.ToString() + " " + PcmSegments[i].Ver + Environment.NewLine;
             }
 
         }
@@ -234,10 +236,16 @@ internal class globals
         Finfo += "Segments:" + Environment.NewLine;
         for (int i = 1; i <= 9; i++)
         {
-            Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].PN.ToString() + " Version: " + globals.PcmSegments[i].Ver + Environment.NewLine;
+            Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].PN.ToString() + " " + globals.PcmSegments[i].Ver + Environment.NewLine;
         }
         Finfo += "VIN".PadRight(20) + globals.ReadVIN(Fname) + Environment.NewLine + Environment.NewLine;
-        Finfo += GetChecksumStatus(Fname);
+        if (PcmSegments[1].Data != null && (PcmSegments[1].Data.Length == (512*1024) || PcmSegments[1].Data.Length == (1024 * 1024)))
+            Finfo += GetChecksumStatus(PcmSegments[1].Data);
+        else
+        {
+            byte[] buf = ReadBin(Fname, 0, BinSize);
+            Finfo += GetChecksumStatus(buf);
+        }
         return Finfo;
     }
 
