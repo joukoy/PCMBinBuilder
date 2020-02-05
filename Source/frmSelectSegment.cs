@@ -18,6 +18,7 @@ namespace PCMBinBuilder
         }
 
         public static int SegNr;
+        private static Button btnCaller;
 
         private void FrmModifyBin_Load(object sender, EventArgs e)
         {
@@ -57,9 +58,10 @@ namespace PCMBinBuilder
 
         }
 
-        public void LoadCalibrations()
+        public void LoadCalibrations(Button btn)
         {
             //listView1.Enabled = true;
+            btnCaller = btn as Button;
             listView1.Clear();
             listView1.View = View.Details;
             listView1.Columns.Add("Calibration");
@@ -153,10 +155,10 @@ namespace PCMBinBuilder
         private void btnBrowse_Click(object sender, EventArgs e)
         {
             radioButton3.Checked = true;
-            string Fname = globals.SelectFile("Load segment from file",true);
-            if (Fname.Length > 1)
+            string FileName = globals.SelectFile("Load segment from file",true);
+            if (FileName.Length > 1)
             {
-                txtCalFile.Text = Fname;
+                txtCalFile.Text = FileName;
             }
 
         }
@@ -186,6 +188,8 @@ namespace PCMBinBuilder
 
         private void btnOK_Click(object sender, EventArgs e)
         {
+            this.DialogResult = DialogResult.Cancel;
+
             if (labelSelectOS.Text=="Select patches")
             {
                 for (int i = 0; i < listView1.CheckedItems.Count; i++)
@@ -231,6 +235,8 @@ namespace PCMBinBuilder
                     }
 
                 }
+                if (btnCaller != null)
+                    btnCaller.Text =  globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].PN.ToString() + " " + globals.PcmSegments[SegNr].Ver;
             }
             this.DialogResult = DialogResult.OK;
             this.Close();

@@ -79,13 +79,9 @@ namespace PCMBinBuilder
                 PatchData = new List<uint>();
 
                 globals.GetPcmType(txtBaseFile.Text);
-                globals.GetSegmentAddresses(txtBaseFile.Text);
-                labelOS.Text = globals.GetOSid();
-
-
-                //globals.ReadSegmentFromBin(txtModifierFile.Text, 0, (uint)BaseFile.LongLength,  ref ModifierFile);
-
                 BaseFile = globals.ReadBin(txtBaseFile.Text, 0, (uint)fsize);
+                globals.GetSegmentAddresses(BaseFile);
+                labelOS.Text = globals.GetOSid();
                 ModifierFile = globals.ReadBin(txtModifierFile.Text, 0, (uint)fsize);
                 txtResult.Text = "";
                 for (int i = 0; i < this.Controls.Count; i++)

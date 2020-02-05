@@ -159,7 +159,6 @@
         #endregion
 
         private System.Windows.Forms.ListView listView1;
-        private System.Windows.Forms.Button btnOK;
         public System.Windows.Forms.TextBox txtCalFile;
         public System.Windows.Forms.RadioButton radioButton2;
         public System.Windows.Forms.RadioButton radioButton3;
@@ -167,5 +166,6 @@
         public System.Windows.Forms.Label labelSelectOS;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.GroupBox groupBox1;
+        public System.Windows.Forms.Button btnOK;
     }
 }

@@ -17,10 +17,13 @@ namespace PCMBinBuilder
             InitializeComponent();
         }
 
+        private static Button CurrentButton;
+
         private void FrmBuild_Load(object sender, EventArgs e)
         {
-
+            
         }
+
 
         public void StartBuilding()
         {
@@ -110,24 +113,16 @@ namespace PCMBinBuilder
 
         private void newButton_Click(object sender, EventArgs e)
         {
-            Button button = sender as Button;
-            int SegNr = (int)button.Tag;
+            CurrentButton = sender as Button;
+            int SegNr = (int)CurrentButton.Tag;
 
             FrmSelectSegment frm2 = new FrmSelectSegment();
             frm2.Text = "Select " + globals.PcmSegments[SegNr].Name;
             frm2.Tag = SegNr;
             frm2.labelSelectOS.Text = frm2.Text;
-            frm2.LoadCalibrations();
-
-            if (frm2.ShowDialog(this) == DialogResult.OK)
-            {
-
-                //button.Text = globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].Source;
-                button.Text = globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].PN.ToString() + " " + globals.PcmSegments[SegNr].Ver;
-            }
-            frm2.Dispose();
-
-            //MessageBox.Show(button.Tag.ToString());
+            
+            frm2.LoadCalibrations( CurrentButton);
+            frm2.Show();
         }
 
         private void btnApply_Click(object sender, EventArgs e)
@@ -140,7 +135,7 @@ namespace PCMBinBuilder
             }
             else
             {
-                for (int s=2; s<=8; s++)
+                for (int s=2; s<=9; s++)
                 {
                     if (globals.PcmSegments[s].Source == "")
                     {
@@ -153,7 +148,7 @@ namespace PCMBinBuilder
                 frmA.Show(this);
                 if (frmA.CreateBinary()) 
                 {
-                    this.Close();
+                    //this.Close();
                 }
             }
 

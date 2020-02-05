@@ -18,7 +18,6 @@ namespace PCMBinBuilder
             InitializeComponent();
         }
 
-        private Boolean BuildOK = false;
 
         public void FixSchekSums(ref byte[] buf)
         {
@@ -100,9 +99,8 @@ namespace PCMBinBuilder
                         }
 
                     }
-                    globals.GetSegmentAddresses(FileName);
-
                     tmpData = globals.ReadBin(FileName, 0, (uint)fsize);
+                    globals.GetSegmentAddresses(tmpData);
 
                     if (FileName.EndsWith("ossegment1")) //Get OS from segment files
                     {
@@ -133,9 +131,9 @@ namespace PCMBinBuilder
                 else if (fsize == (512*1024) || fsize == (1024*1024)) //Full binary
                 {
                     globals.GetPcmType(FileName);
-                    globals.GetSegmentAddresses(FileName);
                     Logger("Loading OS file: " + FileName);
                     globals.PcmSegments[1].Data = globals.ReadBin(FileName, 0, (uint)fsize);
+                    globals.GetSegmentAddresses(globals.PcmSegments[1].Data);
                 }
                 else
                 {
@@ -188,22 +186,41 @@ namespace PCMBinBuilder
                     throw new FileLoadException(Msg);
                 }
                     
-                //Check if readed segment have correct segment number in address start + 3
-                uint FileSegNr = tmpData[3];
-                if (FileSegNr != SegNr)
+                if (SegNr == 9) //SegNr 9 = Eeprom_data. No segment number check, Version number in different place
                 {
-                    string Msg = "Error: " + Environment.NewLine;
-                    Msg += "Wrong segment number: " + FileSegNr.ToString() + "in file: " + FileName;
-                    throw new FileLoadException(Msg);
+                    globals.GetEEpromInfo(tmpData);
+                    if (globals.PcmSegments[9].Ver == "")
+                    {
+                        string Msg = "Error: " + Environment.NewLine;
+                        Msg += "No Eeprom_data version number in file: " + FileName +Environment.NewLine + "Corrupted file?";
+                        throw new FileLoadException(Msg);
+                    }
+                    if (globals.GetVIN(tmpData) == "")
+                    {
+                        string Msg = "Error: " + Environment.NewLine;
+                        Msg += "No VIN number in file: " + FileName + Environment.NewLine + "Corrupted file?";
+                        throw new FileLoadException(Msg);
+                    }
                 }
-                globals.PcmSegments[SegNr].Data = new byte[SegSize];
-                Array.Copy(tmpData, 0, globals.PcmSegments[SegNr].Data,0,SegSize);
+                else
+                {
+                    //Check if readed segment have correct segment number in address start + 3
+                    uint FileSegNr = tmpData[3];
+                    if (FileSegNr != SegNr || tmpData[2] != 0) 
+                    {
+                        string Msg = "Error: " + Environment.NewLine;
+                        Msg += "Wrong segment number: " + FileSegNr.ToString() + "in file: " + FileName;
+                        throw new FileLoadException(Msg);
+                    }
 
-                globals.PcmSegments[SegNr].PN = (uint)((tmpData[4] <<24)|(tmpData[5] << 16)|(tmpData[6] << 8) | (tmpData[7]));
-                byte[] Buf = new byte[2];
-                Buf[0] = tmpData[8];
-                Buf[1] = tmpData[9];
-                globals.PcmSegments[SegNr].Ver = System.Text.Encoding.ASCII.GetString(Buf);
+                    globals.PcmSegments[SegNr].PN = globals.BEToUint32(tmpData,4);
+                    string Ver;
+                    Ver = System.Text.Encoding.ASCII.GetString(tmpData,8,2);
+                    globals.PcmSegments[SegNr].Ver = Regex.Replace(Ver, "[^a-zA-Z0-9]", "?");
+                }
+
+                globals.PcmSegments[SegNr].Data = new byte[SegSize];
+                Array.Copy(tmpData, 0, globals.PcmSegments[SegNr].Data, 0, SegSize);
                 Logger("[OK]");
                 this.Close();
                 return true;
@@ -221,7 +238,7 @@ namespace PCMBinBuilder
             {
                 Logger("Setting VIN to: " + globals.NewVIN);
                 byte[] VINbytes = Encoding.ASCII.GetBytes(globals.NewVIN);
-                Array.Copy(VINbytes,0, buf, (globals.VINAddr + 33), 17);
+                Array.Copy(VINbytes,0, buf, (globals.GetVINAddr(buf) + 33), 17);
                 Logger("[OK]");
             }
 
@@ -239,7 +256,7 @@ namespace PCMBinBuilder
                 {
                     string tmp = Regex.Replace(line, "[^0-9:]", "");
                     if (tmp != line)
-                        Logger("(Skip: '" + line+"')");
+                        Logger("(" + line + ")");
                     else
                     {
                         string[] LineParts = line.Split(':');
@@ -250,7 +267,7 @@ namespace PCMBinBuilder
                         if (Data > 0xff)
                             throw new FileLoadException(String.Format("File: {0} Data {1} out of range!", P.FileName, Data.ToString("X4")));
                         //Apply patchrow:
-                        Logger(Addr.ToString("X4") + ":" + Data.ToString("X4"));
+                        Logger("Set address: " + Addr.ToString("X4").PadRight(10) + "Data:  " + Data.ToString("X4"));
                         buf[Addr] = byte.Parse(LineParts[1]);
                     }
                 }
@@ -273,6 +290,7 @@ namespace PCMBinBuilder
                     writer.Close();
                 }
             }
+            Logger("File saved to: " + FileName);
 
         }
 
@@ -288,6 +306,56 @@ namespace PCMBinBuilder
             Logger("[OK]");
         }
 
+        private void ValidateSegments(byte[] buf)
+        {
+            Logger("Validating segments");
+            if (globals.PcmSegments[1].Data.Length == (512 * 1024) || globals.PcmSegments[1].Data.Length == (1024 * 1024))
+            {
+                //Full binary
+                if (globals.PcmSegments[0].Data != null)
+                    throw new Exception("Error: OS segment 1 is full binary but OS segment 2 is not empty");
+            }
+            else
+            {
+                //Not full binary in OS segment 1
+                if (globals.PcmSegments[0].Data == null)
+                    throw new Exception("Error: OS segment 2 is empty");
+                if (globals.PcmSegments[1].Data.Length != globals.PcmSegments[1].Length)
+                {
+                    string Msg = "Error: "+ Environment.NewLine+"OS segment 1 size =" + globals.PcmSegments[1].Data.Length + Environment.NewLine;
+                    Msg += "Should be: " + globals.PcmSegments[1].Length + "bytes";
+                    throw new Exception(Msg);
+                }
+                if (globals.PcmSegments[0].Data.Length != globals.PcmSegments[0].Length)
+                {
+                    string Msg = "Error: " + Environment.NewLine + "OS segment 2 size =" + globals.PcmSegments[0].Data.Length + Environment.NewLine;
+                    Msg += "Should be: " + globals.PcmSegments[0].Length + "bytes";
+                    throw new Exception(Msg);
+                }
+                for (int s = 2; s <= 9; s++)
+                {
+                    if (globals.PcmSegments[s].Data == null) //No data
+                    {
+                        string Msg = "Error: " + Environment.NewLine + "Segment: " + globals.PcmSegments[s].Name + " missing!";
+                        throw new Exception(Msg);
+                    }
+                    if (s < 9 && globals.PcmSegments[s].Data[2] == 0 && globals.PcmSegments[s].Data[2] == s)
+                    {
+                        //Correct segment number? (No checking for Eeprom_data [segment 9])
+                        if (globals.PcmSegments[s].Data.Length != globals.PcmSegments[s].Length)
+                        {
+                            string Msg = "Error: " + Environment.NewLine + "Segment: " + globals.PcmSegments[s].Name + " have wrong segment number!";
+                            throw new Exception(Msg);
+
+                        }
+                    }
+
+                }
+
+            }
+            Logger("[OK]");
+        }
+
         public Boolean CreateBinary()
         {
             try
@@ -295,20 +363,22 @@ namespace PCMBinBuilder
                 byte[] buf = new byte[globals.BinSize];
 
                 FillBuffer(ref buf);
+                ValidateSegments(buf);
                 ApplySegments(ref buf);
                 SetVinCode(ref buf);
                 ApplyPatches(ref buf);
                 FixSchekSums(ref buf);
+                Logger("Validating data",false);
+                globals.ValidateBuffer(buf);
+                Logger(" [OK]");
                 SaveBintoFile(buf);
                 Logger("Done");
-                BuildOK = true;
                 return true;
             }
             catch (Exception e)
             {
                 Logger("Error:", true);
                 Logger(e.Message);
-                BuildOK = false;
                 return false;
             }
         }
@@ -320,26 +390,27 @@ namespace PCMBinBuilder
             Application.DoEvents();
         }
 
-        public void ExtractSegments (string Fname, string Descr)
+        public void ExtractSegments (string FileName, string Descr)
         {
             uint Fnr = 0;
-            globals.GetPcmType(Fname);
+            long fsize = new System.IO.FileInfo(FileName).Length;
+            if (fsize != (long)(512 * 1024) && fsize != (long)(1024 * 1024))
+                throw new FileLoadException("Unknown file: " + FileName + ". Size = " + fsize.ToString());
+
+            globals.GetPcmType(FileName);
             if (globals.PcmType == "Unknown")
             {
                 Logger("Unknown file");
                 return ;
             }
 
-            Logger("Reading segment addresses from file: " + Fname, false);
-            globals.GetSegmentAddresses(Fname);
-            globals.GetSegmentInfo(Fname);
+            Logger("Reading segment addresses from file: " + FileName, false);
+            byte[] buf = globals.ReadBin(FileName, 0, globals.BinSize);
+            globals.GetSegmentAddresses(buf);
+
+            globals.GetSegmentInfo(buf);
             Logger("[OK]");
 
-            long fsize = new System.IO.FileInfo(Fname).Length;
-            if (fsize != (long)(512 * 1024) && fsize != (long)(1024 * 1024))
-                throw new FileLoadException("Unknown file: " + Fname + ". Size = " + fsize.ToString());
-
-            byte[] buf = globals.ReadBin(Fname,0,(uint)fsize);
             string tmp = Path.Combine(Application.StartupPath, "OS", globals.PcmType + "-" + globals.GetOSid() + "-" + globals.GetOSVer());
             string OsFile = tmp + ".ossegment1";
             Fnr = 0;
@@ -385,10 +456,10 @@ namespace PCMBinBuilder
             this.Show();
             try
             {
-                string Fname;
+                string FileName;
                 string Descr;
-                Fname = globals.SelectFile();
-                if (Fname.Length < 1)
+                FileName = globals.SelectFile();
+                if (FileName.Length < 1)
                 {
                     Logger("No file selected");
                     return;
@@ -399,7 +470,7 @@ namespace PCMBinBuilder
 
                 if (Multi)
                 {
-                    string BinFolder = Path.GetDirectoryName(Fname);
+                    string BinFolder = Path.GetDirectoryName(FileName);
                     DirectoryInfo d = new DirectoryInfo(BinFolder);
                     FileInfo[] Files = d.GetFiles("*.bin");
                     foreach (FileInfo file in Files)
@@ -409,7 +480,7 @@ namespace PCMBinBuilder
                 }
                 else
                 {
-                    frmA.TextBox1.Text = Path.GetFileName(Fname).Replace(".bin", "");
+                    frmA.TextBox1.Text = Path.GetFileName(FileName).Replace(".bin", "");
                     frmA.AcceptButton = frmA.btnOK;
 
                     if (frmA.ShowDialog(this) != DialogResult.OK) {
@@ -418,7 +489,7 @@ namespace PCMBinBuilder
                     }
                     Descr = frmA.TextBox1.Text;
                     frmA.Dispose();
-                    ExtractSegments(Fname, Descr);
+                    ExtractSegments(FileName, Descr);
 
                 }
                 Logger("Extract done");
@@ -432,10 +503,6 @@ namespace PCMBinBuilder
 
         private void btnClose_Click(object sender, EventArgs e)
         {
-            if (BuildOK)
-                this.DialogResult = DialogResult.OK;
-            else
-                this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
 

@@ -36,21 +36,22 @@ namespace PCMBinBuilder
     private void btnFileInfo_Click(object sender, EventArgs e)
         {
             globals.CleanMe();
-            string Fname = globals.SelectFile();
-            if (Fname.Length < 1)
+            string FileName = globals.SelectFile();
+            if (FileName.Length < 1)
                 return;
-            globals.GetPcmType(Fname);
+            globals.GetPcmType(FileName);
             if(globals.PcmType == "Unknown")
             {
                 MessageBox.Show("Unknown file", "Unknown file");
                 return;
             }
-            globals.GetSegmentAddresses(Fname);
+            byte[] buf = globals.ReadBin(FileName, 0, globals.BinSize);
+            globals.GetSegmentAddresses(buf);
 
             FrmFileinfo frmX = new FrmFileinfo();
             frmX.Show(this);
 
-            string Finfo = globals.PcmFileInfo(Fname);
+            string Finfo = globals.PcmFileInfo(FileName);
             frmX.labelFileInfo.Text = Finfo;
         }
 

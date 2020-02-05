@@ -23,16 +23,16 @@ namespace PCMBinBuilder
         public void LoadBasefile()
         {
             this.Text = "Modify BIN";
-            string Fname = globals.SelectFile();
-            if (Fname.Length < 1)
+            string FileName = globals.SelectFile();
+            if (FileName.Length < 1)
                 return;
-            globals.PcmSegments[1].Source = Fname;
+            globals.PcmSegments[1].Source = FileName;
             frmAction frmA = new frmAction();
             frmA.Show(this);
-            if (!frmA.LoadOS(Fname))
+            if (!frmA.LoadOS(FileName))
                return;
-            labelBaseFile.Text = Fname;
-            labelBinInfo.Text = globals.PcmFileInfo(Fname);
+            labelBaseFile.Text = FileName;
+            labelBinInfo.Text = globals.PcmFileInfo(FileName);
         }
 
         private void btnApply_Click(object sender, EventArgs e)
