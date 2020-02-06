@@ -35,7 +35,7 @@
             // 
             // btnApply
             // 
-            this.btnApply.Location = new System.Drawing.Point(282, 345);
+            this.btnApply.Location = new System.Drawing.Point(128, 353);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(107, 37);
             this.btnApply.TabIndex = 1;
@@ -67,7 +67,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(658, 388);
+            this.ClientSize = new System.Drawing.Size(370, 400);
             this.Controls.Add(this.labelOS);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btnApply);

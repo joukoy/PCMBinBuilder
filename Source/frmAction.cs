@@ -24,36 +24,35 @@ namespace PCMBinBuilder
             uint Calculated = 0;
             uint FromFile = 0;
 
-            Logger("Calculating OS checksum");
+            Logger("Calculating checksums");
             Calculated = globals.CalculateChecksumOS(buf);
-            FromFile = (uint)((buf[0x500] << 8) | buf[0x501]);
+            FromFile = globals.BEToUint16(buf, 0x500);
             if (Calculated != FromFile)
             {
-                Logger("Fixing OS checksum: " + FromFile.ToString("X2") + " => " + Calculated.ToString("X2"));
+                Logger("OS              checksum: " + FromFile.ToString("X2").PadRight(5) + "=> " + Calculated.ToString("X2").PadRight(6) + "[Fixed]");
                 buf[0x500] = (byte)((Calculated & 0xFF00) >> 8);
                 buf[0x501] = (byte)(Calculated & 0xFF);
             }
             else
             {
-                Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " [OK]");
+                Logger("OS              checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1").PadRight(6) + "[OK]");
             }
 
-            Logger("Calculating Segment checksums");
             for (int s = 2; s <= 8; s++)
             {
                 uint StartAddr = globals.PcmSegments[s].Start;
                 uint Length = globals.PcmSegments[s].Length;
                 Calculated = globals.CalculateChecksum(StartAddr, Length, buf);
-                FromFile = (uint)((buf[StartAddr] << 8) | buf[StartAddr + 1]);
+                FromFile = globals.BEToUint16(buf, StartAddr);
                 if (Calculated != FromFile)
                 {
-                    Logger("Fixing "+globals.PcmSegments[s].Name + " segment checksum: " + FromFile.ToString("X2") + " => " + Calculated.ToString("X2"));
+                    Logger(globals.PcmSegments[s].Name.PadRight(16) + "checksum: " + FromFile.ToString("X2").PadRight(5) + "=> " + Calculated.ToString("X2").PadRight(6) + "[Fixed]");
                     buf[StartAddr] = (byte)((Calculated & 0xFF00) >> 8);
                     buf[StartAddr + 1] = (byte)(Calculated & 0xFF);
                 }
                 else
                 {
-                    Logger(globals.PcmSegments[s].Name + " checksum: " + buf[StartAddr].ToString("X1") + buf[StartAddr + 1].ToString("X1")+" [OK]");
+                    Logger(globals.PcmSegments[s].Name.PadRight(16) + "checksum: " + buf[StartAddr].ToString("X1") + buf[StartAddr + 1].ToString("X1").PadRight(6) + "[OK]");
                 }
             }
         }
@@ -71,6 +70,7 @@ namespace PCMBinBuilder
 
         public Boolean LoadOS(string FileName)
         {
+            //Load OS segment(s) from file(s) to segment buffer
             try
             {
                 long fsize = new System.IO.FileInfo(FileName).Length;
@@ -154,6 +154,7 @@ namespace PCMBinBuilder
 
         public Boolean LoadCalSegment(int SegNr, string FileName)
         {
+            //Load CAL or Eeprom segment from file to segment buffer
             try { 
                 Logger("Reading " + globals.PcmSegments[SegNr].Name + " from " + FileName);
                 uint SegSize = globals.PcmSegments[SegNr].Length;
@@ -164,7 +165,6 @@ namespace PCMBinBuilder
                 {                     
                     tmpData = globals.ReadBin(FileName, 0, SegSize);
                 }
-                
                 else if (fsize == globals.BinSize)
                 {
                     string OS1 = globals.GetOSid();
@@ -267,14 +267,14 @@ namespace PCMBinBuilder
                         if (Data > 0xff)
                             throw new FileLoadException(String.Format("File: {0} Data {1} out of range!", P.FileName, Data.ToString("X4")));
                         //Apply patchrow:
-                        Logger("Set address: " + Addr.ToString("X4").PadRight(10) + "Data:  " + Data.ToString("X4"));
+                        Logger("Set address: ".PadRight(16) + Addr.ToString("X4").PadRight(10) + "Data:   " + Data.ToString("X4"));
                         buf[Addr] = byte.Parse(LineParts[1]);
                     }
                 }
                 sr.Close();
 
             }
-            Logger("OK");
+            Logger("[OK]");
         }
 
         public void SaveBintoFile(byte[] buf)
@@ -368,9 +368,9 @@ namespace PCMBinBuilder
                 SetVinCode(ref buf);
                 ApplyPatches(ref buf);
                 FixSchekSums(ref buf);
-                Logger("Validating data",false);
+                Logger("Validating data");
                 globals.ValidateBuffer(buf);
-                Logger(" [OK]");
+                Logger("[OK]");
                 SaveBintoFile(buf);
                 Logger("Done");
                 return true;
@@ -453,7 +453,6 @@ namespace PCMBinBuilder
         }
         public void StartExtractSegments(Boolean Multi)
         {
-            this.Show();
             try
             {
                 string FileName;

@@ -98,7 +98,7 @@
             this.btnModifyBin.Name = "btnModifyBin";
             this.btnModifyBin.Size = new System.Drawing.Size(147, 25);
             this.btnModifyBin.TabIndex = 2;
-            this.btnModifyBin.Text = "Modify bin";
+            this.btnModifyBin.Text = "Modify BIN";
             this.btnModifyBin.UseVisualStyleBackColor = true;
             this.btnModifyBin.Click += new System.EventHandler(this.btnModifyBin_Click);
             // 

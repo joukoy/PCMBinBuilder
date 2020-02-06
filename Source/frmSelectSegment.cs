@@ -25,8 +25,11 @@ namespace PCMBinBuilder
 
         }
 
-        public void LoadOSFiles()
+        public void LoadOSFiles(Button btn)
         {
+            
+            btnCaller = btn as Button;
+
             radioButton2.Checked = true;
             listView1.Enabled = true;
             listView1.Clear();
@@ -121,6 +124,9 @@ namespace PCMBinBuilder
                 CalName = CalName.Replace(".pcmpatch", "");
                 var item = new ListViewItem(CalName);
                 item.Tag = file.FullName;
+                foreach (globals.Patch P in globals.PatchList)
+                    if (CalName == P.Name)
+                        item.Checked = true;
                 listView1.Items.Add(item);
             }
 
@@ -188,10 +194,10 @@ namespace PCMBinBuilder
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.Cancel;
 
             if (labelSelectOS.Text=="Select patches")
             {
+                globals.PatchList.Clear();
                 for (int i = 0; i < listView1.CheckedItems.Count; i++)
                 {
                     globals.Patch P;
@@ -201,6 +207,7 @@ namespace PCMBinBuilder
                     globals.PatchList.Add(P);
                     
                 }
+                this.DialogResult = DialogResult.OK;
 
             } else {  //Select segment
                 if (radioButton2.Checked)
@@ -235,11 +242,21 @@ namespace PCMBinBuilder
                     }
 
                 }
-                if (btnCaller != null)
-                    btnCaller.Text =  globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].PN.ToString() + " " + globals.PcmSegments[SegNr].Ver;
+                if (btnCaller != null) { 
+                    if (btnCaller.Text == "Build new BIN") //FrmMain
+                    {
+                        FrmSegmentList FrmB = new FrmSegmentList();
+                        FrmB.Show();
+                        FrmB.StartBuilding();
+                        this.Close();
+                    }
+                    else //From frmSegmentList 
+                    { 
+                        btnCaller.Text =  globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].PN.ToString() + " " + globals.PcmSegments[SegNr].Ver;
+                        this.Close();
+                    }
+                }
             }
-            this.DialogResult = DialogResult.OK;
-            this.Close();
         }
 
         

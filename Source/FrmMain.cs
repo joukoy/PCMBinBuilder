@@ -33,26 +33,33 @@ namespace PCMBinBuilder
             globals.InitializeMe();
         }
 
-    private void btnFileInfo_Click(object sender, EventArgs e)
+        private void btnFileInfo_Click(object sender, EventArgs e)
         {
-            globals.CleanMe();
-            string FileName = globals.SelectFile();
-            if (FileName.Length < 1)
-                return;
-            globals.GetPcmType(FileName);
-            if(globals.PcmType == "Unknown")
-            {
-                MessageBox.Show("Unknown file", "Unknown file");
-                return;
+            try 
+            { 
+                globals.CleanMe();
+                string FileName = globals.SelectFile();
+                if (FileName.Length < 1)
+                    return;
+                globals.GetPcmType(FileName);
+                if(globals.PcmType == "Unknown")
+                {
+                    MessageBox.Show("Unknown file", "Unknown file");
+                    return;
+                }
+                byte[] buf = globals.ReadBin(FileName, 0, globals.BinSize);
+
+                FrmFileinfo frmX = new FrmFileinfo();
+                frmX.Show(this);
+
+                string Finfo = globals.PcmFileInfo(FileName);
+                frmX.labelFileInfo.Text = Finfo;
             }
-            byte[] buf = globals.ReadBin(FileName, 0, globals.BinSize);
-            globals.GetSegmentAddresses(buf);
-
-            FrmFileinfo frmX = new FrmFileinfo();
-            frmX.Show(this);
-
-            string Finfo = globals.PcmFileInfo(FileName);
-            frmX.labelFileInfo.Text = Finfo;
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Error");
+            }
+            
         }
 
         private void btnBuildBin_Click(object sender, EventArgs e)
@@ -62,15 +69,8 @@ namespace PCMBinBuilder
             frm2.Text = "Select OS";
             frm2.labelSelectOS.Text = frm2.Text;
             frm2.Tag = 1;
-            frm2.LoadOSFiles();
-
-            if (frm2.ShowDialog(this) == DialogResult.OK)
-            {
-                frm2.Dispose();
-                FrmSegmentList FrmB = new FrmSegmentList();
-                FrmB.Show(this);                
-                FrmB.StartBuilding();
-            }
+            frm2.Show();
+            frm2.LoadOSFiles(sender as Button);
         }
 
         private void btnModifyBin_Click(object sender, EventArgs e)

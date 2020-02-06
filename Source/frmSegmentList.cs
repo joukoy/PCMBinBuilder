@@ -31,15 +31,14 @@ namespace PCMBinBuilder
             int i = 1;
             for (int s = 2; s <= 9; s++)
             {
-                //button1[] BtnX = new button1;
                 Button newButton = new Button();
                 this.Controls.Add(newButton);
                 if (globals.PcmSegments[s].Source == "")
                     newButton.Text = globals.PcmSegments[s].Name;
                 else
-                    newButton.Text = globals.PcmSegments[s].Name + ":  " + globals.PcmSegments[s].Source;
+                    newButton.Text = globals.PcmSegments[s].Name + ":  " + globals.PcmSegments[s].PN.ToString() + " " + globals.PcmSegments[s].Ver;
                 newButton.Location = new Point(10, (i * 30));
-                newButton.Size = new Size(640, 25);
+                newButton.Size = new Size(350, 25);
                 newButton.Click += new System.EventHandler(this.newButton_Click);
                 newButton.Tag = s;
                 i++;
@@ -50,7 +49,7 @@ namespace PCMBinBuilder
             this.Controls.Add(VINButton);
             VINButton.Text = "VIN";
             VINButton.Location = new Point(10, (i * 30));
-            VINButton.Size = new Size(640, 25);
+            VINButton.Size = new Size(350, 25);
             VINButton.Click += new System.EventHandler(this.VINButton_Click);
             VINButton.Tag = 20;
 
@@ -61,7 +60,7 @@ namespace PCMBinBuilder
             this.Controls.Add(PatchButton);
             PatchButton.Text = "Patches";
             PatchButton.Location = new Point(10, ( i * 30));
-            PatchButton.Size = new Size(640, 25);
+            PatchButton.Size = new Size(350, 50);
             PatchButton.Click += new System.EventHandler(this.PatchButton_Click);
             PatchButton.Tag = 30;
 
@@ -80,7 +79,15 @@ namespace PCMBinBuilder
 
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
-                button.Text = "Patches selected";
+                if (globals.PatchList.Count > 0)
+                {
+                    button.Text = "Patches: ";
+                    foreach (globals.Patch P in globals.PatchList)
+                        button.Text += P.Name + ", ";
+
+                }
+                else
+                    button.Text = "Patches";
             }
             frm2.Dispose();
 
