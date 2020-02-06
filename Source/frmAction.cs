@@ -62,7 +62,7 @@ namespace PCMBinBuilder
             for (int s = 0; s <= 9; s++)
             {
                 if (globals.PcmSegments[s].Data != null) 
-                {
+                {                    
                     Array.Copy(globals.PcmSegments[s].Data, 0, buf, globals.PcmSegments[s].Start, globals.PcmSegments[s].Data.Length);
                 }
             }
@@ -100,6 +100,8 @@ namespace PCMBinBuilder
 
                     }
                     tmpData = globals.ReadBin(FileName, 0, (uint)fsize);
+                    if (tmpData[0] != 0 || tmpData[1] != 0xFF)
+                        throw new Exception("Error: OS segment 1 not valid!");
                     globals.GetSegmentAddresses(tmpData);
 
                     if (FileName.EndsWith("ossegment1")) //Get OS from segment files
@@ -133,6 +135,8 @@ namespace PCMBinBuilder
                     globals.GetPcmType(FileName);
                     Logger("Loading OS file: " + FileName);
                     globals.PcmSegments[1].Data = globals.ReadBin(FileName, 0, (uint)fsize);
+                    if (globals.PcmSegments[1].Data[0] != 0 || globals.PcmSegments[1].Data[1] != 0xFF)
+                        throw new Exception("Error: OS segment 1 not valid!");
                     globals.GetSegmentAddresses(globals.PcmSegments[1].Data);
                 }
                 else

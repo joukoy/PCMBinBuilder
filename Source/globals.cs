@@ -411,6 +411,8 @@ internal class globals
 
     public static void ValidateBuffer(byte[] buf)
     {
+        if(buf[0] != 0 || buf[1] != 0xFF)
+            throw new Exception("Error: OS segment 1 not valid!");
         GetSegmentInfo(buf);
         if (PcmSegments[9].Ver == "")
             throw new Exception("Error: Eeprom_data version missing!");
