@@ -25,6 +25,13 @@ internal class globals
         public string Description;
     }
 
+    public struct EepromKey
+    {
+        public UInt16 Seed;
+        public UInt16 Key;
+        public UInt16 NewKey;
+    }
+
     public const int MaxSeg = 10;
     public static PcmSegment[] PcmSegments = new PcmSegment[MaxSeg];
     public static string PcmType = "";
@@ -139,7 +146,7 @@ internal class globals
         FromFile = BEToUint16(buf,0x500);
         if (Calculated == FromFile)
         {
-            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X2").PadRight(4) + " * Calculated: " + Calculated.ToString("X2").PadRight(4) + " [OK]";
+            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X2").PadRight(4) + " [OK]";
             //Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " OK");
         }
         else
@@ -157,7 +164,7 @@ internal class globals
             FromFile = BEToUint16(buf, StartAddr);
             if (Calculated == FromFile)
             {
-                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X2").PadRight(4) + " * Calculated: " + Calculated.ToString("X2").PadRight(4) + " [OK]";
+                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X2").PadRight(4) + " [OK]";
             }
             else
             {
@@ -204,7 +211,7 @@ internal class globals
 
         }
         if (NewVIN != "")
-            Finfo += "VIN => ".PadRight(20) + NewVIN;
+            Finfo += Environment.NewLine + "VIN => ".PadRight(20) + NewVIN + Environment.NewLine;
         if (PatchList.Count > 0)
         {
             Finfo += Environment.NewLine + "Patches: ";
@@ -215,6 +222,23 @@ internal class globals
 
     }
 
+    public static string PcmBufInfo(byte[] buf)
+    {
+        GetSegmentAddresses(buf);
+        GetSegmentInfo(buf);
+        string Finfo = "PCM Type: ".PadRight(20) + PcmType + Environment.NewLine + Environment.NewLine;
+        Finfo += " ".PadLeft(20) + "* Segments *" + Environment.NewLine;
+        for (int i = 1; i <= 8; i++)
+        {
+            Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].PN.ToString().PadRight(10) + " " + globals.PcmSegments[i].Ver + Environment.NewLine;
+        }
+        Finfo += Environment.NewLine;
+        Finfo += " ".PadLeft(20) + "* Eeprom_data *" + Environment.NewLine + globals.GetEEpromInfo(buf);
+        Finfo += "VIN".PadRight(20) + globals.GetVIN(buf) + Environment.NewLine + Environment.NewLine;
+        Finfo += GetChecksumStatus(buf);
+        return Finfo;
+    }
+
     public static string PcmFileInfo(string FileName)
     {
         GetPcmType(FileName);
@@ -222,22 +246,7 @@ internal class globals
             return "Unknow file";
         byte[] buf = new byte[BinSize];
         buf = ReadBin(FileName, 0, BinSize);
-        GetSegmentAddresses(buf);
-        GetSegmentInfo(buf);
-        string Finfo = "PCM Type: ".PadRight(20) + PcmType + Environment.NewLine;
-        Finfo += "Segments:" + Environment.NewLine;
-        for (int i = 1; i <= 9; i++)
-        {
-            Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].PN.ToString().PadRight(10) + " " + globals.PcmSegments[i].Ver + Environment.NewLine;
-        }
-        Finfo += "VIN".PadRight(20) + globals.ReadVIN(FileName) + Environment.NewLine + Environment.NewLine;
-        if (PcmSegments[1].Data != null && (PcmSegments[1].Data.Length == (512 * 1024) || PcmSegments[1].Data.Length == (1024 * 1024)))
-            Finfo += GetChecksumStatus(PcmSegments[1].Data);
-        else
-        {
-            Finfo += GetChecksumStatus(buf);
-        }
-        return Finfo;
+        return PcmBufInfo(buf);
     }
 
     public static void GetPcmType(string FileName)
@@ -314,7 +323,7 @@ internal class globals
             offset = 0x4000;
         }
 
-        //Find check word from Eeprom_data:
+        //Find check-word from Eeprom_data:
         if (BitConverter.ToUInt16(buf, (int)offset + 0x88) == 0xA0A5)
             return offset;
         if (BitConverter.ToUInt16(buf, (int)offset + 0x56) == 0xA0A5)
@@ -344,15 +353,47 @@ internal class globals
         return GetVIN(tmpBuf);
     }
 
+    public static EepromKey GetEepromKey(byte[] buf)
+    {
+        uint VINAddr = GetVINAddr(buf);
+        EepromKey tmpKey;
 
-    public static void GetEEpromInfo(byte[] buf)
+        //Calculate key
+        tmpKey.Seed = BEToUint16(buf, VINAddr);
+        tmpKey.Key = BEToUint16(buf, VINAddr + 2);
+
+        tmpKey.NewKey = (UInt16)(tmpKey.Seed + 0x5201);
+        tmpKey.NewKey = (UInt16)(SwapBytes(tmpKey.NewKey) + 0x9738);
+        tmpKey.NewKey = (UInt16)(0xffff - tmpKey.NewKey - 0xd428);
+
+        return tmpKey;
+    }
+
+    public static string GetEEpromInfo(byte[] buf)
     {
         uint VINAddr = GetVINAddr(buf);
         string Ver;
+        EepromKey Key;
 
         PcmSegments[9].PN = BEToUint32(buf, VINAddr + 4);
         Ver = System.Text.Encoding.ASCII.GetString(buf, (int)VINAddr + 28, 4);
         PcmSegments[9].Ver = Regex.Replace(Ver, "[^a-zA-Z0-9]", ""); //Filter out all special chars
+
+        Key = GetEepromKey(buf);
+
+        string Ret = "Seed ".PadRight(20) + Key.Seed.ToString("X2") + Environment.NewLine;
+        Ret += "Bin Key ".PadRight(20) + Key.Key.ToString("X2") ;
+        if (Key.Key == Key.NewKey)
+            Ret += " [OK]" + Environment.NewLine;
+        else
+            Ret += " * Calculated: " + Key.NewKey.ToString("X2") + " [Fail]" + Environment.NewLine;
+        Ret += "Hardware ".PadRight(20) + BEToUint32(buf, VINAddr + 4).ToString("X2") + Environment.NewLine;
+        Ret += "Serial ".PadRight(20) + System.Text.Encoding.ASCII.GetString(buf, (int)VINAddr + 8, 12) + Environment.NewLine;
+        Ret += "Id ".PadRight(20) + BEToUint32(buf, VINAddr + 20).ToString("X4") + Environment.NewLine;
+        Ret += "Id2 ".PadRight(20) + BEToUint32(buf, VINAddr + 24).ToString("X4") + Environment.NewLine;
+        Ret += "Broadcast ".PadRight(20) + System.Text.Encoding.ASCII.GetString(buf, (int)VINAddr + 28, 4) + Environment.NewLine;
+
+        return Ret;
     }
 
     public static byte[] ReadBin(string FileName, uint FileOffset, uint Length)
@@ -411,11 +452,13 @@ internal class globals
 
     public static void ValidateBuffer(byte[] buf)
     {
-        if(buf[0] != 0 || buf[1] != 0xFF)
+        if(buf[0x503] != 1)
             throw new Exception("Error: OS segment 1 not valid!");
+        if (buf[0x20000] != 0x4E || buf[0x20001] != 0x56)
+            throw new Exception("Error: OS segment 2 is not valid!");
         GetSegmentInfo(buf);
         if (PcmSegments[9].Ver == "")
-            throw new Exception("Error: Eeprom_data version missing!");
+            throw new Exception("Error: Eeprom_data Broadcast code missing!");
         if (GetVIN(buf) == "")
             throw new Exception("Error: VIN code missing!");
         for (int s = 2; s <= 8; s++)
@@ -423,8 +466,6 @@ internal class globals
             if (PcmSegments[s].Ver == "")
                 throw new Exception("Error: " + PcmSegments[s].Name + " version code missing!");
         }
-        if (buf[0x20000] != 0x4E || buf[0x20001] != 0x56)
-            throw new Exception("Error: OS segment 2 is not valid!");
     }
 
     public static string ValidateVIN(string VINcode)
@@ -439,10 +480,22 @@ internal class globals
         return (uint)((buf[offset] << 24) | (buf[offset  + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3]);
     }
 
-    public static uint BEToUint16(byte[] buf, uint offset)
+    public static UInt16 BEToUint16(byte[] buf, uint offset)
     {
-        return (uint)((buf[offset] << 8) | buf[offset + 1]);
+        return (UInt16)((buf[offset] << 8) | buf[offset + 1]);
+    }
 
+    public static ushort SwapBytes(ushort x)
+    {
+        return (ushort)((ushort)((x & 0xff) << 8) | ((x >> 8) & 0xff));
+    }
+    
+    public static uint SwapBytes(uint x)
+    {
+        return ((x & 0x000000ff) << 24) +
+               ((x & 0x0000ff00) << 8) +
+               ((x & 0x00ff0000) >> 8) +
+               ((x & 0xff000000) >> 24);
     }
 }
 

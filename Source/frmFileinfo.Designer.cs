@@ -45,7 +45,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(488, 449);
+            this.ClientSize = new System.Drawing.Size(488, 553);
             this.Controls.Add(this.labelFileInfo);
             this.Name = "FrmFileinfo";
             this.Text = "BIN File information";

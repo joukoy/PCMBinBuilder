@@ -76,12 +76,19 @@ namespace PCMBinBuilder
 
             string CalFolder = Path.Combine(Application.StartupPath, "Calibration");
             DirectoryInfo d = new DirectoryInfo(CalFolder);
-            string FileFIlter = globals.GetOSid() + "-" + SegmentName + "*.calsegment";
+            string FileFIlter;
+            if (SegNr == 9) //Eeprom_data
+                FileFIlter = SegmentName + "*.calsegment";
+            else
+                FileFIlter = globals.GetOSid() + "-" + SegmentName + "*.calsegment";
             FileInfo[] Files = d.GetFiles(FileFIlter);
             foreach (FileInfo file in Files)
             {
                 string CalName = file.Name.Replace(".calsegment", "");
-                CalName = CalName.Replace(globals.GetOSid() + "-" + SegmentName +"-", "");
+                if (SegNr == 9)
+                    CalName = CalName.Replace(SegmentName +"-", "");
+                else
+                    CalName = CalName.Replace(globals.GetOSid() + "-" + SegmentName + "-", "");
                 var item = new ListViewItem(CalName);
                 item.Tag = file.FullName;
                 string DescrFile = file.FullName +  ".txt";
@@ -210,37 +217,37 @@ namespace PCMBinBuilder
                 this.DialogResult = DialogResult.OK;
 
             } else {  //Select segment
+                string SrcFile = "";
                 if (radioButton2.Checked)
                 {
-
                     if (listView1.SelectedItems.Count > 0)
                     {
-                        globals.PcmSegments[SegNr].Source = listView1.SelectedItems[0].Text;
-                        frmAction frmA = new frmAction();
-                        frmA.Show(this);
-                        if (SegNr > 1) //CAL segments
-                            frmA.LoadCalSegment(SegNr, listView1.SelectedItems[0].Tag.ToString());
-                        else
-                            frmA.LoadOS(listView1.SelectedItems[0].Tag.ToString());
+                        SrcFile = listView1.SelectedItems[0].Tag.ToString();
                     }
-                    else
-                        return;
                 }
-                else if (radioButton3.Checked)
+                else //radioButton3.Checked
                 {
-                    globals.PcmSegments[SegNr].Source = txtCalFile.Text;
-                    frmAction frmA = new frmAction();
-                    frmA.Show(this);
-                    if (SegNr > 1) //CAL segments
-                    {
-                        if (!frmA.LoadCalSegment(SegNr, txtCalFile.Text))
+                    SrcFile = txtCalFile.Text;
+
+                }
+                globals.PcmSegments[SegNr].Source = SrcFile;
+                frmAction frmA = new frmAction();
+                frmA.Show(this);
+                if (SegNr > 1) //CAL segments
+                {
+                    if (SegNr == 9) { 
+                        if (!frmA.LoadEepromData(SrcFile))
                             return;
                     }
                     else { 
-                        if (!frmA.LoadOS(txtCalFile.Text))
-                           return;
+                        if (!frmA.LoadCalSegment(SegNr, SrcFile))
+                            return;
                     }
-
+                }
+                else
+                {
+                    if (!frmA.LoadOS(SrcFile))
+                        return;
                 }
                 if (btnCaller != null) { 
                     if (btnCaller.Text == "Build new BIN") //FrmMain

@@ -55,6 +55,24 @@ namespace PCMBinBuilder
                     Logger(globals.PcmSegments[s].Name.PadRight(16) + "checksum: " + buf[StartAddr].ToString("X1") + buf[StartAddr + 1].ToString("X1").PadRight(6) + "[OK]");
                 }
             }
+
+            Logger("Calculating Eeprom key");
+            globals.EepromKey Key;
+            Key = globals.GetEepromKey(buf);
+            Logger("Seed: ".PadRight(16) + Key.Seed.ToString("X4") + Environment.NewLine + "Bin Key: ".PadRight(16) + Key.Key.ToString("X4"), false);
+            if (Key.Key != Key.NewKey)
+            {
+                uint VINAddr = globals.GetVINAddr(buf);
+
+                buf[VINAddr + 2] = (byte)((Key.NewKey & 0xFF00) >> 8);
+                buf[VINAddr + 3] = (byte)(Key.NewKey & 0xFF);
+                Logger("  *  Calculated: ".PadRight(16) + Key.NewKey.ToString("X4") + " [Fixed]");
+            }
+            else
+            {
+                Logger(" [OK]");
+            }
+
         }
 
         private  void ApplySegments(ref byte[] buf)
@@ -158,7 +176,7 @@ namespace PCMBinBuilder
 
         public Boolean LoadCalSegment(int SegNr, string FileName)
         {
-            //Load CAL or Eeprom segment from file to segment buffer
+            //Load CAL segment from file to segment buffer
             try { 
                 Logger("Reading " + globals.PcmSegments[SegNr].Name + " from " + FileName);
                 uint SegSize = globals.PcmSegments[SegNr].Length;
@@ -225,6 +243,59 @@ namespace PCMBinBuilder
 
                 globals.PcmSegments[SegNr].Data = new byte[SegSize];
                 Array.Copy(tmpData, 0, globals.PcmSegments[SegNr].Data, 0, SegSize);
+                Logger("[OK]");
+                this.Close();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger(ex.Message);
+                return false;
+            }
+        }
+
+        public Boolean LoadEepromData(string FileName)
+        {
+            //Load Eeprom segment from file to segment buffer
+            try
+            {
+                Logger("Reading " + globals.PcmSegments[9].Name + " from " + FileName);
+                uint SegSize = globals.PcmSegments[9].Length;
+                long fsize = new System.IO.FileInfo(FileName).Length;
+                byte[] tmpData;
+
+                if (fsize == SegSize)
+                {
+                    tmpData = globals.ReadBin(FileName, 0, SegSize);
+                }
+                else if (fsize == (512*1024) || fsize == (1024*1024))
+                {
+                    tmpData = globals.ReadBin(FileName, globals.PcmSegments[9].Start, SegSize);
+                }
+                else
+                {
+                    string Msg = "Error: " + Environment.NewLine;
+                    Msg += FileName + " file size = " + fsize.ToString() + " bytes" + Environment.NewLine;
+                    Msg += "Should be: " + SegSize.ToString() + " or " + globals.BinSize.ToString() + " bytes";
+                    throw new FileLoadException(Msg);
+                }
+
+                globals.GetEEpromInfo(tmpData);
+                if (globals.PcmSegments[9].Ver == "")
+                {
+                    string Msg = "Error: " + Environment.NewLine;
+                    Msg += "No Eeprom_data version number in file: " + FileName + Environment.NewLine + "Corrupted file?";
+                    throw new FileLoadException(Msg);
+                }
+                if (globals.GetVIN(tmpData) == "")
+                {
+                    string Msg = "Error: " + Environment.NewLine;
+                    Msg += "No VIN number in file: " + FileName + Environment.NewLine + "Corrupted file?";
+                    throw new FileLoadException(Msg);
+                }
+              
+                globals.PcmSegments[9].Data = new byte[SegSize];
+                Array.Copy(tmpData, 0, globals.PcmSegments[9].Data, 0, SegSize);
                 Logger("[OK]");
                 this.Close();
                 return true;
@@ -439,12 +510,17 @@ namespace PCMBinBuilder
 
             for (int s = 2; s <= 9; s++)
             {
-                string SegFname = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) + ".calsegment";
+                string FnameStart;
+                if (s == 9) //Eeprom_data
+                    FnameStart = Path.Combine(Application.StartupPath, "Calibration", globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) ;
+                else
+                    FnameStart = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver);
+                string SegFname = FnameStart + ".calsegment";
                 Fnr = 0;
                 while (File.Exists(SegFname))
                 {
                     Fnr++;
-                    SegFname = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) + "(" + Fnr.ToString() + ").calsegment";
+                    SegFname = FnameStart + "(" + Fnr.ToString() + ").calsegment";
                 }
                 globals.WriteSegmentToFile(SegFname, globals.PcmSegments[s].Start, globals.PcmSegments[s].Length, buf);
                 sw = new StreamWriter(SegFname + ".txt");

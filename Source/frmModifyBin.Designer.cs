@@ -37,13 +37,20 @@
             this.btnCancel = new System.Windows.Forms.Button();
             this.labelBinInfo = new System.Windows.Forms.Label();
             this.btnFixCheckSums = new System.Windows.Forms.Button();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.labelMods = new System.Windows.Forms.Label();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
+            this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(12, 9);
+            this.label1.Location = new System.Drawing.Point(5, 9);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(63, 16);
             this.label1.TabIndex = 6;
@@ -52,16 +59,16 @@
             // labelBaseFile
             // 
             this.labelBaseFile.AutoSize = true;
-            this.labelBaseFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelBaseFile.Location = new System.Drawing.Point(92, 10);
+            this.labelBaseFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelBaseFile.Location = new System.Drawing.Point(74, 9);
             this.labelBaseFile.Name = "labelBaseFile";
-            this.labelBaseFile.Size = new System.Drawing.Size(12, 16);
+            this.labelBaseFile.Size = new System.Drawing.Size(10, 13);
             this.labelBaseFile.TabIndex = 5;
             this.labelBaseFile.Text = "-";
             // 
             // btnAddPatches
             // 
-            this.btnAddPatches.Location = new System.Drawing.Point(12, 39);
+            this.btnAddPatches.Location = new System.Drawing.Point(8, 39);
             this.btnAddPatches.Name = "btnAddPatches";
             this.btnAddPatches.Size = new System.Drawing.Size(99, 27);
             this.btnAddPatches.TabIndex = 7;
@@ -113,7 +120,7 @@
             // 
             this.labelBinInfo.AutoSize = true;
             this.labelBinInfo.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelBinInfo.Location = new System.Drawing.Point(9, 69);
+            this.labelBinInfo.Location = new System.Drawing.Point(3, 3);
             this.labelBinInfo.Name = "labelBinInfo";
             this.labelBinInfo.Size = new System.Drawing.Size(63, 15);
             this.labelBinInfo.TabIndex = 12;
@@ -129,13 +136,55 @@
             this.btnFixCheckSums.UseVisualStyleBackColor = true;
             this.btnFixCheckSums.Click += new System.EventHandler(this.btnFixCheckSums_Click);
             // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Location = new System.Drawing.Point(4, 72);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(522, 528);
+            this.tabControl1.TabIndex = 14;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.labelBinInfo);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(523, 502);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Original";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.labelMods);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(514, 502);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Modifications";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // labelMods
+            // 
+            this.labelMods.AutoSize = true;
+            this.labelMods.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelMods.Location = new System.Drawing.Point(2, 4);
+            this.labelMods.Name = "labelMods";
+            this.labelMods.Size = new System.Drawing.Size(98, 15);
+            this.labelMods.TabIndex = 0;
+            this.labelMods.Text = "Modifications";
+            // 
             // FrmModBin
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(534, 470);
+            this.ClientSize = new System.Drawing.Size(529, 599);
+            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnFixCheckSums);
-            this.Controls.Add(this.labelBinInfo);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnApply);
             this.Controls.Add(this.btnSwapSegments);
@@ -146,6 +195,11 @@
             this.Name = "FrmModBin";
             this.Text = "Modify Bin";
             this.Load += new System.EventHandler(this.FrmModBin_Load);
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
+            this.tabPage2.ResumeLayout(false);
+            this.tabPage2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -162,5 +216,9 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label labelBinInfo;
         private System.Windows.Forms.Button btnFixCheckSums;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Label labelMods;
     }
 }
