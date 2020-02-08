@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
 
 namespace PCMBinBuilder
 {
@@ -19,6 +20,23 @@ namespace PCMBinBuilder
         private void FrmFileinfo_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void brtnSave_Click(object sender, EventArgs e)
+        {
+            try { 
+                string FileName = globals.SelectSaveFile("Text files (*.txt)|*.txt|All files (*.*)|*.*");
+                if (FileName.Length>1)
+                {
+                    StreamWriter sw = new StreamWriter(FileName);
+                    sw.WriteLine(textBox1.Text);
+                    sw.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Error");
+            }
         }
     }
 }

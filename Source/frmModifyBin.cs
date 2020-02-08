@@ -32,7 +32,7 @@ namespace PCMBinBuilder
             if (!frmA.LoadOS(FileName))
                return;
             labelBaseFile.Text = FileName;
-            labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data);
+            labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data,globals.PCM);
         }
 
         private void btnApply_Click(object sender, EventArgs e)
@@ -50,7 +50,7 @@ namespace PCMBinBuilder
             frm2.StartBuilding();
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
-                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data);
+                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
                 //labelBinInfo.Text += Environment.NewLine + "Modifications: " + Environment.NewLine;
                 labelMods.Text = globals.GetModifications();
             }
@@ -83,7 +83,7 @@ namespace PCMBinBuilder
             {
                 // Read the contents of VinDialog's TextBox.
                 globals.NewVIN = VinDialog.TextBox1.Text;
-                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data);
+                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
                 //labelBinInfo.Text += Environment.NewLine + "Modifications: " + Environment.NewLine;
                 labelMods.Text = globals.GetModifications();
             }
@@ -102,7 +102,7 @@ namespace PCMBinBuilder
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
                 frm2.Dispose();
-                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data);
+                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
                 //labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
                 labelMods.Text = globals.GetModifications();
             }
@@ -114,7 +114,7 @@ namespace PCMBinBuilder
             frmAction frmA = new frmAction();
             frmA.Show(this);
             frmA.FixSchekSums(ref globals.PcmSegments[1].Data);
-            labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data);
+            labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
             //labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
             labelMods.Text = globals.GetModifications();
 

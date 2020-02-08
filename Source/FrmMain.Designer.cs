@@ -38,13 +38,17 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.radioMulti = new System.Windows.Forms.RadioButton();
             this.radioSingle = new System.Windows.Forms.RadioButton();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.radioSingleInfo = new System.Windows.Forms.RadioButton();
+            this.radioMultiInfo = new System.Windows.Forms.RadioButton();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnCreatePatch
             // 
-            this.btnCreatePatch.Location = new System.Drawing.Point(7, 104);
+            this.btnCreatePatch.Location = new System.Drawing.Point(7, 72);
             this.btnCreatePatch.Name = "btnCreatePatch";
             this.btnCreatePatch.Size = new System.Drawing.Size(147, 25);
             this.btnCreatePatch.TabIndex = 4;
@@ -74,9 +78,9 @@
             // 
             // btnFileInfo
             // 
-            this.btnFileInfo.Location = new System.Drawing.Point(7, 11);
+            this.btnFileInfo.Location = new System.Drawing.Point(6, 62);
             this.btnFileInfo.Name = "btnFileInfo";
-            this.btnFileInfo.Size = new System.Drawing.Size(147, 25);
+            this.btnFileInfo.Size = new System.Drawing.Size(138, 25);
             this.btnFileInfo.TabIndex = 1;
             this.btnFileInfo.Text = "BIN file info";
             this.btnFileInfo.UseVisualStyleBackColor = true;
@@ -84,7 +88,7 @@
             // 
             // btnBuildBin
             // 
-            this.btnBuildBin.Location = new System.Drawing.Point(7, 73);
+            this.btnBuildBin.Location = new System.Drawing.Point(7, 41);
             this.btnBuildBin.Name = "btnBuildBin";
             this.btnBuildBin.Size = new System.Drawing.Size(147, 25);
             this.btnBuildBin.TabIndex = 3;
@@ -94,7 +98,7 @@
             // 
             // btnModifyBin
             // 
-            this.btnModifyBin.Location = new System.Drawing.Point(7, 42);
+            this.btnModifyBin.Location = new System.Drawing.Point(7, 10);
             this.btnModifyBin.Name = "btnModifyBin";
             this.btnModifyBin.Size = new System.Drawing.Size(147, 25);
             this.btnModifyBin.TabIndex = 2;
@@ -107,9 +111,9 @@
             this.groupBox1.Controls.Add(this.radioMulti);
             this.groupBox1.Controls.Add(this.radioSingle);
             this.groupBox1.Controls.Add(this.btnExtract);
-            this.groupBox1.Location = new System.Drawing.Point(7, 135);
+            this.groupBox1.Location = new System.Drawing.Point(7, 196);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(166, 98);
+            this.groupBox1.Size = new System.Drawing.Size(166, 96);
             this.groupBox1.TabIndex = 8;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Extract calibrations";
@@ -136,15 +140,50 @@
             this.radioSingle.Text = "Single file";
             this.radioSingle.UseVisualStyleBackColor = true;
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.radioMultiInfo);
+            this.groupBox2.Controls.Add(this.radioSingleInfo);
+            this.groupBox2.Controls.Add(this.btnFileInfo);
+            this.groupBox2.Location = new System.Drawing.Point(7, 103);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(165, 90);
+            this.groupBox2.TabIndex = 9;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "BIN file info";
+            // 
+            // radioSingleInfo
+            // 
+            this.radioSingleInfo.AutoSize = true;
+            this.radioSingleInfo.Checked = true;
+            this.radioSingleInfo.Location = new System.Drawing.Point(3, 16);
+            this.radioSingleInfo.Name = "radioSingleInfo";
+            this.radioSingleInfo.Size = new System.Drawing.Size(70, 17);
+            this.radioSingleInfo.TabIndex = 2;
+            this.radioSingleInfo.TabStop = true;
+            this.radioSingleInfo.Text = "Single file";
+            this.radioSingleInfo.UseVisualStyleBackColor = true;
+            this.radioSingleInfo.CheckedChanged += new System.EventHandler(this.radioSingleInfo_CheckedChanged);
+            // 
+            // radioMultiInfo
+            // 
+            this.radioMultiInfo.AutoSize = true;
+            this.radioMultiInfo.Location = new System.Drawing.Point(3, 39);
+            this.radioMultiInfo.Name = "radioMultiInfo";
+            this.radioMultiInfo.Size = new System.Drawing.Size(155, 17);
+            this.radioMultiInfo.TabIndex = 3;
+            this.radioMultiInfo.Text = "All files in folder (select one)";
+            this.radioMultiInfo.UseVisualStyleBackColor = true;
+            // 
             // FrmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(502, 243);
+            this.ClientSize = new System.Drawing.Size(502, 296);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnModifyBin);
             this.Controls.Add(this.btnBuildBin);
-            this.Controls.Add(this.btnFileInfo);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.btnCreatePatch);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -154,6 +193,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -168,6 +209,9 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton radioMulti;
         private System.Windows.Forms.RadioButton radioSingle;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.RadioButton radioMultiInfo;
+        private System.Windows.Forms.RadioButton radioSingleInfo;
     }
 }
 

@@ -78,10 +78,16 @@ namespace PCMBinBuilder
                 PatchAddr = new List<uint>();
                 PatchData = new List<uint>();
 
-                globals.GetPcmType(txtBaseFile.Text);
+                globals.PCMinfo BasePCM = globals.GetPcmType(txtBaseFile.Text);
+                globals.PCMinfo ModPCM = globals.GetPcmType(txtModifierFile.Text);
+                if (BasePCM.Model != ModPCM.Model)
+                {
+                    MessageBox.Show("Files are not from same PCM model, will not compare!");
+                    return;
+                }
                 BaseFile = globals.ReadBin(txtBaseFile.Text, 0, (uint)fsize);
-                globals.GetSegmentAddresses(BaseFile);
-                labelOS.Text = globals.GetOSid();
+                globals.GetSegmentAddresses(BaseFile, BasePCM);
+                labelOS.Text = globals.GetOSid().ToString();
                 ModifierFile = globals.ReadBin(txtModifierFile.Text, 0, (uint)fsize);
                 txtResult.Text = "";
                 for (int i = 0; i < this.Controls.Count; i++)

@@ -32,14 +32,20 @@ internal class globals
         public UInt16 NewKey;
     }
 
+    public struct PCMinfo
+    {
+        public String Type;
+        public string Model;
+        public uint BinSize;
+        public uint EepromType;
+    }
+
     public const int MaxSeg = 10;
     public static PcmSegment[] PcmSegments = new PcmSegment[MaxSeg];
-    public static string PcmType = "";
-    public static uint BinSize = 0;
     public static string VIN = "";
     public static string NewVIN = "";
     public static List<Patch> PatchList;
-
+    public static PCMinfo PCM;
     public static void InitializeMe()
     {
         PcmSegments[0].Name = "OS2";
@@ -83,10 +89,11 @@ internal class globals
         return "";
 
     }
-    public static string SelectSaveFile()
+    public static string SelectSaveFile(string Filter = "BIN files (*.bin)|*.bin")
     {
         SaveFileDialog saveFileDialog = new SaveFileDialog();
-        saveFileDialog.Filter = "BIN files (*.bin)|*.bin";
+        //saveFileDialog.Filter = "BIN files (*.bin)|*.bin";
+        saveFileDialog.Filter = Filter;
         saveFileDialog.RestoreDirectory = true;
         saveFileDialog.Title = "Select bin file";
 
@@ -146,12 +153,12 @@ internal class globals
         FromFile = BEToUint16(buf,0x500);
         if (Calculated == FromFile)
         {
-            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X2").PadRight(4) + " [OK]";
+            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X4").PadRight(4) + " [OK]";
             //Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " OK");
         }
         else
         {
-            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X2").PadRight(4) + " * Calculated: " + Calculated.ToString("X2").PadRight(4) + " [FAIL]";
+            Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X4").PadRight(4) + " * Calculated: " + Calculated.ToString("X4").PadRight(4) + " [FAIL]";
         }
 
         Result += Environment.NewLine;
@@ -164,20 +171,20 @@ internal class globals
             FromFile = BEToUint16(buf, StartAddr);
             if (Calculated == FromFile)
             {
-                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X2").PadRight(4) + " [OK]";
+                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X4").PadRight(4) + " [OK]";
             }
             else
             {
-                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X2").PadRight(4) + " * Calculated: " + Calculated.ToString("X2").PadRight(4) + " [FAIL]";
+                Result += globals.PcmSegments[s].Name.PadRight(12) + "Bin checksum: " + FromFile.ToString("X4").PadRight(4) + " * Calculated: " + Calculated.ToString("X4").PadRight(4) + " [FAIL]";
             }
             Result += Environment.NewLine;
         }
         return Result;
     }
 
-    public static string GetOSid()
+    public static uint GetOSid()
     {
-        return PcmSegments[1].PN.ToString();
+        return PcmSegments[1].PN;
     }
 
     public static string GetOSVer()
@@ -185,18 +192,22 @@ internal class globals
         return PcmSegments[1].Ver;
     }
 
-    public static string GetOsidFromFile(string FileName)
+    public static uint GetOsidFromFile(string FileName)
     {
         byte[] Buf = new byte[2];
         using (BinaryReader reader = new BinaryReader(File.Open(FileName, FileMode.Open)))
         {
+            reader.BaseStream.Seek(0x503, 0);
+            if (reader.ReadByte() != 1)
+                throw new Exception("Error: Unknown file");
             reader.BaseStream.Seek(0x504, 0);
             uint PN = reader.ReadUInt32BE();
             reader.BaseStream.Close();
-            return PN.ToString();
+            return PN;
         }
 
     }
+
     public static string GetModifications()
     {
         string Finfo = "";
@@ -222,47 +233,119 @@ internal class globals
 
     }
 
-    public static string PcmBufInfo(byte[] buf)
+    public static string PcmBufInfo(byte[] buf, PCMinfo P)
     {
-        GetSegmentAddresses(buf);
+        GetSegmentAddresses(buf,P);
         GetSegmentInfo(buf);
-        string Finfo = "PCM Type: ".PadRight(20) + PcmType + Environment.NewLine + Environment.NewLine;
+        string Finfo = "PCM Model: ".PadRight(20) + P.Model + Environment.NewLine + Environment.NewLine;
         Finfo += " ".PadLeft(20) + "* Segments *" + Environment.NewLine;
         for (int i = 1; i <= 8; i++)
         {
-            Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].PN.ToString().PadRight(10) + " " + globals.PcmSegments[i].Ver + Environment.NewLine;
+            Finfo += globals.PcmSegments[i].Name.PadRight(15) + globals.PcmSegments[i].PN.ToString().PadRight(8) + " " + globals.PcmSegments[i].Ver;
+            Finfo += " Size: " + globals.PcmSegments[i].Length.ToString().PadRight(5) + " (0x" + globals.PcmSegments[i].Length.ToString("X4") +")" + Environment.NewLine;
         }
         Finfo += Environment.NewLine;
-        Finfo += " ".PadLeft(20) + "* Eeprom_data *" + Environment.NewLine + globals.GetEEpromInfo(buf);
-        Finfo += "VIN".PadRight(20) + globals.GetVIN(buf) + Environment.NewLine + Environment.NewLine;
+        Finfo += " ".PadLeft(15) + "* Eeprom_data *" + Environment.NewLine + globals.GetEEpromInfo(buf);
+        Finfo += "VIN".PadRight(15) + globals.GetVIN(buf) + Environment.NewLine + Environment.NewLine;
         Finfo += GetChecksumStatus(buf);
         return Finfo;
     }
 
     public static string PcmFileInfo(string FileName)
     {
-        GetPcmType(FileName);
-        if (PcmType == "Unknown")
+        PCMinfo P =  GetPcmType(FileName);
+        if (P.Type == "Unknown")
             return "Unknow file";
-        byte[] buf = new byte[BinSize];
-        buf = ReadBin(FileName, 0, BinSize);
-        return PcmBufInfo(buf);
+        byte[] buf = new byte[P.BinSize];
+        buf = ReadBin(FileName, 0, P.BinSize);
+        return PcmBufInfo(buf,P);
     }
 
-    public static void GetPcmType(string FileName)
+    public static PCMinfo GetPcmType(string FileName)
     {
-        PcmType = "Unknown";
+        PCMinfo tmp;
+        tmp.Type = "Unknown";
+        tmp.BinSize = 0;
+        tmp.Model = "";
+        tmp.EepromType = 0;
+
         long fsize = new System.IO.FileInfo(FileName).Length;
-        if (fsize >= (1024 * 1024) || (FileName.EndsWith(".ossegment1") && FileName.Contains("OS\\P59-")))
+        if (fsize != (512*1024) && fsize != (1024*1024) && fsize != 16384)
         {
-            PcmType = "P59";
-            BinSize = 1024 * 1024;
+            return tmp;
         }
-        else if (fsize == (512 * 1024) || (FileName.EndsWith(".ossegment1") && FileName.Contains("OS\\P01-")))
+        if (fsize == (512*1024)) //P01
         {
-            PcmType = "P01";
-            BinSize = 512 * 1024;
+            tmp.Type = "P01";
+            tmp.BinSize = (512 * 1024);
+            byte[] buf = ReadBin(FileName,0, (uint)fsize);
+            tmp.EepromType = GetModelFromEeprom(buf);
+            if (tmp.EepromType == 1999)
+                tmp.Model = "P01(99-00)";
+            else
+                tmp.Model = "P01(01-03)";
         }
+        if (fsize == (1024 * 1024)) //P59
+        {
+            tmp.Type = "P59";
+            tmp.Model = "P59";
+            tmp.BinSize = (1024 * 1024);
+            tmp.EepromType = 2001;
+        }
+        if (fsize == 16384) //OS segment
+        {
+            if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P59")) 
+            {
+                tmp.Type = "P59";
+                tmp.Model = "P59";
+                tmp.BinSize = (1024 * 1024);
+                tmp.EepromType = 2001;
+            }
+            else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(01-03)")) 
+            {
+                tmp.Type = "P01";
+                tmp.BinSize = (512 * 1024);
+                tmp.Model = "P01(01-03)";
+                tmp.EepromType = 2001;
+            }
+            else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(99-00)"))
+            {
+                tmp.Type = "P01";
+                tmp.BinSize = (512 * 1024);
+                tmp.Model = "P01(99-00)";
+                tmp.EepromType = 1999;
+            }
+            else
+            {
+                PCMBinBuilder.frmPCMModel frmP = new PCMBinBuilder.frmPCMModel();
+                if (frmP.ShowDialog() == DialogResult.OK)
+                {
+                    if (frmP.radioP59.Checked) 
+                    {
+                        tmp.Type = "P59";
+                        tmp.Model = "P59";
+                        tmp.BinSize = (512 * 1024);
+                        tmp.EepromType = 2001;
+                    }
+                    else if (frmP.radioP01.Checked)
+                    {
+                        tmp.Type = "P01";
+                        tmp.BinSize = (512 * 1024);
+                        tmp.Model = "P01(01-03)";
+                        tmp.EepromType = 2001;
+                    }
+                    else if (frmP.radioP0199.Checked)
+                    {
+                        tmp.Type = "P01";
+                        tmp.BinSize = (512 * 1024);
+                        tmp.Model = "P01(99-00)";
+                        tmp.EepromType = 1999;
+                    }
+                }
+            }
+        }
+        return tmp;
+
     }
 
     public static void GetSegmentInfo(byte[] buf)
@@ -281,16 +364,16 @@ internal class globals
 
     }
 
-    public static void GetSegmentAddresses(byte[] buf)
+    public static void GetSegmentAddresses(byte[] buf, PCMinfo P)
     {
 
         PcmSegments[1].Start = 0;
         PcmSegments[1].Length = 0x4000;
         PcmSegments[0].Start = 0x020000;
-        if (PcmType == "P01")
-            PcmSegments[0].Length = 0x5FFFE;
-        else
+        if (P.Type == "P59")
             PcmSegments[0].Length = 0xDFFFE;
+        else
+            PcmSegments[0].Length = 0x5FFFE;
         //EEprom Data:
         PcmSegments[9].Start = 0x4000;
         PcmSegments[9].Length = 0x4000;
@@ -306,12 +389,13 @@ internal class globals
             offset += 4;
             PcmSegments[s].Length = BEToUint32(buf, offset) - PcmSegments[s].Start + 1;
             offset += 4;
-            if (PcmSegments[s].Start > BinSize || (PcmSegments[s].Start + PcmSegments[s].Length) > BinSize)
+            if (PcmSegments[s].Start > P.BinSize || (PcmSegments[s].Start + PcmSegments[s].Length) > P.BinSize)
                 throw new Exception("Error: Corrupted file!");
         }
 
 
     }
+
 
     public static uint GetVINAddr(byte[] buf)
     {
@@ -324,14 +408,45 @@ internal class globals
         }
 
         //Find check-word from Eeprom_data:
-        if (BitConverter.ToUInt16(buf, (int)offset + 0x88) == 0xA0A5)
+        uint CheckAddr = offset + 0x88;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
             return offset;
-        if (BitConverter.ToUInt16(buf, (int)offset + 0x56) == 0xA0A5)
+        CheckAddr = offset + 0x56;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
             return offset;
-        if (BitConverter.ToUInt16(buf, (int)offset + 0x2088) == 0xA0A5)
+        CheckAddr = offset + 0x2088;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
             return offset + 0x2000;
-        if (BitConverter.ToUInt16(buf, (int)offset + 0x2056) == 0xA0A5)
+        CheckAddr = offset + 0x2056;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
             return offset + 0x2000;
+        else
+            return 1;
+    }
+
+    public static uint GetModelFromEeprom(byte[] buf)
+    {
+        uint offset = 0;
+
+        if (buf.Length >= (512 * 1024))
+        {
+            //Full binary
+            offset = 0x4000;
+        }
+
+        //Find check-word from Eeprom_data:
+        uint CheckAddr = offset + 0x88;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
+            return 2001;
+        CheckAddr = offset + 0x56;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
+            return 1999;
+        CheckAddr = offset + 0x2088;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
+            return 2001;
+        CheckAddr = offset + 0x2056;
+        if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
+            return 1999;
         else
             return 1;
     }
@@ -381,16 +496,16 @@ internal class globals
 
         Key = GetEepromKey(buf);
 
-        string Ret = "Seed ".PadRight(20) + Key.Seed.ToString("X2") + Environment.NewLine;
-        Ret += "Bin Key ".PadRight(20) + Key.Key.ToString("X2") ;
+        string Ret = "Seed ".PadRight(20) + Key.Seed.ToString("X4") + Environment.NewLine;
+        Ret += "Bin Key ".PadRight(20) + Key.Key.ToString("X4") ;
         if (Key.Key == Key.NewKey)
             Ret += " [OK]" + Environment.NewLine;
         else
-            Ret += " * Calculated: " + Key.NewKey.ToString("X2") + " [Fail]" + Environment.NewLine;
-        Ret += "Hardware ".PadRight(20) + BEToUint32(buf, VINAddr + 4).ToString("X2") + Environment.NewLine;
+            Ret += " * Calculated: " + Key.NewKey.ToString("X4") + " [Fail]" + Environment.NewLine;
+        Ret += "Hardware ".PadRight(20) + BEToUint32(buf, VINAddr + 4).ToString() + Environment.NewLine;
         Ret += "Serial ".PadRight(20) + System.Text.Encoding.ASCII.GetString(buf, (int)VINAddr + 8, 12) + Environment.NewLine;
-        Ret += "Id ".PadRight(20) + BEToUint32(buf, VINAddr + 20).ToString("X4") + Environment.NewLine;
-        Ret += "Id2 ".PadRight(20) + BEToUint32(buf, VINAddr + 24).ToString("X4") + Environment.NewLine;
+        Ret += "Id ".PadRight(20) + BEToUint32(buf, VINAddr + 20).ToString() + Environment.NewLine;
+        Ret += "Id2 ".PadRight(20) + BEToUint32(buf, VINAddr + 24).ToString() + Environment.NewLine;
         Ret += "Broadcast ".PadRight(20) + System.Text.Encoding.ASCII.GetString(buf, (int)VINAddr + 28, 4) + Environment.NewLine;
 
         return Ret;
@@ -446,8 +561,10 @@ internal class globals
         PatchList = new List<Patch>();
         NewVIN = "";
         VIN = "";
-        PcmType = "";
-        BinSize = 0;
+        PCM.Type = "";
+        PCM.Model = "";
+        PCM.BinSize = 0;
+
     }
 
     public static void ValidateBuffer(byte[] buf)

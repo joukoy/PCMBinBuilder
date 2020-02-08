@@ -78,7 +78,7 @@ namespace PCMBinBuilder
             DirectoryInfo d = new DirectoryInfo(CalFolder);
             string FileFIlter;
             if (SegNr == 9) //Eeprom_data
-                FileFIlter = SegmentName + "*.calsegment";
+                FileFIlter = globals.PCM.EepromType.ToString()+"-"+ SegmentName + "*.calsegment";
             else
                 FileFIlter = globals.GetOSid() + "-" + SegmentName + "*.calsegment";
             FileInfo[] Files = d.GetFiles(FileFIlter);
@@ -86,7 +86,7 @@ namespace PCMBinBuilder
             {
                 string CalName = file.Name.Replace(".calsegment", "");
                 if (SegNr == 9)
-                    CalName = CalName.Replace(SegmentName +"-", "");
+                    CalName = CalName.Replace(globals.PCM.EepromType.ToString() + "-" + SegmentName + "-", "");
                 else
                     CalName = CalName.Replace(globals.GetOSid() + "-" + SegmentName + "-", "");
                 var item = new ListViewItem(CalName);

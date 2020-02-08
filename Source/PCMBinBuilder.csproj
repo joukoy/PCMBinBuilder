@@ -59,6 +59,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FrmPCMModel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmPCMModel.Designer.cs">
+      <DependentUpon>FrmPCMModel.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmAction.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +116,9 @@
     <Compile Include="globals.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FrmPCMModel.resx">
+      <DependentUpon>FrmPCMModel.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmAction.resx">
       <DependentUpon>frmAction.cs</DependentUpon>
     </EmbeddedResource>

@@ -28,25 +28,37 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.labelFileInfo = new System.Windows.Forms.Label();
+            this.brtnSave = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
-            // labelFileInfo
+            // brtnSave
             // 
-            this.labelFileInfo.AutoSize = true;
-            this.labelFileInfo.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelFileInfo.Location = new System.Drawing.Point(11, 13);
-            this.labelFileInfo.Name = "labelFileInfo";
-            this.labelFileInfo.Size = new System.Drawing.Size(56, 16);
-            this.labelFileInfo.TabIndex = 0;
-            this.labelFileInfo.Text = "label1";
+            this.brtnSave.Location = new System.Drawing.Point(413, 33);
+            this.brtnSave.Name = "brtnSave";
+            this.brtnSave.Size = new System.Drawing.Size(83, 24);
+            this.brtnSave.TabIndex = 1;
+            this.brtnSave.Text = "Save...";
+            this.brtnSave.UseVisualStyleBackColor = true;
+            this.brtnSave.Click += new System.EventHandler(this.brtnSave_Click);
+            // 
+            // textBox1
+            // 
+            this.textBox1.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox1.Location = new System.Drawing.Point(5, 2);
+            this.textBox1.Multiline = true;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBox1.Size = new System.Drawing.Size(491, 554);
+            this.textBox1.TabIndex = 2;
             // 
             // FrmFileinfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(488, 553);
-            this.Controls.Add(this.labelFileInfo);
+            this.ClientSize = new System.Drawing.Size(498, 553);
+            this.Controls.Add(this.brtnSave);
+            this.Controls.Add(this.textBox1);
             this.Name = "FrmFileinfo";
             this.Text = "BIN File information";
             this.Load += new System.EventHandler(this.FrmFileinfo_Load);
@@ -56,7 +68,7 @@
         }
 
         #endregion
-
-        public System.Windows.Forms.Label labelFileInfo;
+        private System.Windows.Forms.Button brtnSave;
+        public System.Windows.Forms.TextBox textBox1;
     }
 }

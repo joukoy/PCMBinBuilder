@@ -28,6 +28,7 @@ namespace PCMBinBuilder
         public void StartBuilding()
         {
             labelOS.Text = globals.GetOSid() + " " + globals.GetOSVer();
+            labelPCM.Text = globals.PCM.Model;
             int i = 1;
             for (int s = 2; s <= 9; s++)
             {

@@ -29,7 +29,7 @@ namespace PCMBinBuilder
             FromFile = globals.BEToUint16(buf, 0x500);
             if (Calculated != FromFile)
             {
-                Logger("OS              checksum: " + FromFile.ToString("X2").PadRight(5) + "=> " + Calculated.ToString("X2").PadRight(6) + "[Fixed]");
+                Logger("OS              checksum: " + FromFile.ToString("X4").PadRight(5) + "=> " + Calculated.ToString("X4").PadRight(6) + "[Fixed]");
                 buf[0x500] = (byte)((Calculated & 0xFF00) >> 8);
                 buf[0x501] = (byte)(Calculated & 0xFF);
             }
@@ -46,7 +46,7 @@ namespace PCMBinBuilder
                 FromFile = globals.BEToUint16(buf, StartAddr);
                 if (Calculated != FromFile)
                 {
-                    Logger(globals.PcmSegments[s].Name.PadRight(16) + "checksum: " + FromFile.ToString("X2").PadRight(5) + "=> " + Calculated.ToString("X2").PadRight(6) + "[Fixed]");
+                    Logger(globals.PcmSegments[s].Name.PadRight(16) + "checksum: " + FromFile.ToString("X4").PadRight(5) + "=> " + Calculated.ToString("X4").PadRight(6) + "[Fixed]");
                     buf[StartAddr] = (byte)((Calculated & 0xFF00) >> 8);
                     buf[StartAddr + 1] = (byte)(Calculated & 0xFF);
                 }
@@ -99,28 +99,11 @@ namespace PCMBinBuilder
                 if (fsize == 0x4000) //OS Segment1 size
                 {
                     Logger("Loading OS segment 1");
-                    globals.GetPcmType(FileName);
-                    if (globals.PcmType == "Unknown")
-                    {
-                        DialogResult Res = MessageBox.Show("P59 (1MB) = YES\nP01(512kB) = NO", "PCM Type P59?", MessageBoxButtons.YesNoCancel);
-                        if (Res == DialogResult.Cancel)
-                            throw new Exception("User cancel");
-                        if (Res == DialogResult.Yes)
-                        {
-                            globals.PcmType = "P59";
-                            globals.BinSize = 1024 * 1024;
-                        }
-                        if (Res == DialogResult.No)
-                        {
-                            globals.PcmType = "P01";
-                            globals.BinSize = 512 * 1024;
-                        }
-
-                    }
+                    globals.PCM = globals.GetPcmType(FileName);
                     tmpData = globals.ReadBin(FileName, 0, (uint)fsize);
                     if (tmpData[0] != 0 || tmpData[1] != 0xFF)
                         throw new Exception("Error: OS segment 1 not valid!");
-                    globals.GetSegmentAddresses(tmpData);
+                    globals.GetSegmentAddresses(tmpData, globals.PCM);
 
                     if (FileName.EndsWith("ossegment1")) //Get OS from segment files
                     {
@@ -150,12 +133,12 @@ namespace PCMBinBuilder
                 }
                 else if (fsize == (512*1024) || fsize == (1024*1024)) //Full binary
                 {
-                    globals.GetPcmType(FileName);
+                    globals.PCM =  globals.GetPcmType(FileName);
                     Logger("Loading OS file: " + FileName);
                     globals.PcmSegments[1].Data = globals.ReadBin(FileName, 0, (uint)fsize);
                     if (globals.PcmSegments[1].Data[0] != 0 || globals.PcmSegments[1].Data[1] != 0xFF)
                         throw new Exception("Error: OS segment 1 not valid!");
-                    globals.GetSegmentAddresses(globals.PcmSegments[1].Data);
+                    globals.GetSegmentAddresses(globals.PcmSegments[1].Data, globals.PCM);
                 }
                 else
                 {
@@ -187,10 +170,10 @@ namespace PCMBinBuilder
                 {                     
                     tmpData = globals.ReadBin(FileName, 0, SegSize);
                 }
-                else if (fsize == globals.BinSize)
+                else if (fsize == globals.PCM.BinSize)
                 {
-                    string OS1 = globals.GetOSid();
-                    string OS2 = globals.GetOsidFromFile(FileName);
+                    uint OS1 = globals.GetOSid();
+                    uint OS2 = globals.GetOsidFromFile(FileName);
                     if (OS1 != OS2)
                     {
                         string err = "OS mismatch!" + Environment.NewLine;
@@ -204,7 +187,7 @@ namespace PCMBinBuilder
                 {
                     string Msg = "Error: " + Environment.NewLine;
                     Msg += FileName + " file size = " + fsize.ToString() +" bytes" + Environment.NewLine;
-                    Msg += "Should be: "  + SegSize.ToString() + " or " + globals.BinSize.ToString() + " bytes";
+                    Msg += "Should be: "  + SegSize.ToString() + " or " + globals.PCM.BinSize.ToString() + " bytes";
                     throw new FileLoadException(Msg);
                 }
                     
@@ -276,10 +259,19 @@ namespace PCMBinBuilder
                 {
                     string Msg = "Error: " + Environment.NewLine;
                     Msg += FileName + " file size = " + fsize.ToString() + " bytes" + Environment.NewLine;
-                    Msg += "Should be: " + SegSize.ToString() + " or " + globals.BinSize.ToString() + " bytes";
+                    Msg += "Should be: " + SegSize.ToString() + " or " + globals.PCM.BinSize.ToString() + " bytes";
                     throw new FileLoadException(Msg);
                 }
-
+                if (globals.GetModelFromEeprom(tmpData) != globals.PCM.EepromType)
+                {
+                    string Msg = "Error: " + Environment.NewLine;
+                    Msg += "Incompatible Eeprom!" + Environment.NewLine;
+                    if (globals.PCM.EepromType == 1999)
+                        Msg += "PCM model " + globals.PCM.Model + " is compatible only Eeprom from year 1999-2000";
+                    else
+                        Msg += "PCM model " + globals.PCM.Model + " is compatible only Eeprom from year 2001 and newer";
+                    throw new FileLoadException(Msg);
+                }
                 globals.GetEEpromInfo(tmpData);
                 if (globals.PcmSegments[9].Ver == "")
                 {
@@ -337,7 +329,7 @@ namespace PCMBinBuilder
                         string[] LineParts = line.Split(':');
                         uint Addr = uint.Parse(LineParts[0]);
                         uint Data = uint.Parse(LineParts[1]);
-                        if (Addr > globals.BinSize)
+                        if (Addr > globals.PCM.BinSize)
                             throw new FileLoadException(String.Format("File: {0} Address {1} out of range!", P.FileName, Addr.ToString("X4")));
                         if (Data > 0xff)
                             throw new FileLoadException(String.Format("File: {0} Data {1} out of range!", P.FileName, Data.ToString("X4")));
@@ -372,7 +364,7 @@ namespace PCMBinBuilder
         private void FillBuffer(ref byte[] buf)
         {
             Logger("Filling empty area");
-            for (uint i = 0; i < globals.BinSize; i++)
+            for (uint i = 0; i < globals.PCM.BinSize; i++)
             {
                 buf[i] = 0x4A;
                 i++;
@@ -435,7 +427,7 @@ namespace PCMBinBuilder
         {
             try
             {
-                byte[] buf = new byte[globals.BinSize];
+                byte[] buf = new byte[globals.PCM.BinSize];
 
                 FillBuffer(ref buf);
                 ValidateSegments(buf);
@@ -472,21 +464,21 @@ namespace PCMBinBuilder
             if (fsize != (long)(512 * 1024) && fsize != (long)(1024 * 1024))
                 throw new FileLoadException("Unknown file: " + FileName + ". Size = " + fsize.ToString());
 
-            globals.GetPcmType(FileName);
-            if (globals.PcmType == "Unknown")
+            globals.PCM = globals.GetPcmType(FileName);
+            if (globals.PCM.Type == "Unknown")
             {
                 Logger("Unknown file");
                 return ;
             }
 
             Logger("Reading segment addresses from file: " + FileName, false);
-            byte[] buf = globals.ReadBin(FileName, 0, globals.BinSize);
-            globals.GetSegmentAddresses(buf);
+            byte[] buf = globals.ReadBin(FileName, 0, globals.PCM.BinSize);
+            globals.GetSegmentAddresses(buf,globals.PCM);
 
             globals.GetSegmentInfo(buf);
             Logger("[OK]");
 
-            string tmp = Path.Combine(Application.StartupPath, "OS", globals.PcmType + "-" + globals.GetOSid() + "-" + globals.GetOSVer());
+            string tmp = Path.Combine(Application.StartupPath, "OS", globals.PCM.Model + "-" + globals.GetOSid() + "-" + globals.GetOSVer());
             string OsFile = tmp + ".ossegment1";
             Fnr = 0;
             while (File.Exists(OsFile))
@@ -512,7 +504,7 @@ namespace PCMBinBuilder
             {
                 string FnameStart;
                 if (s == 9) //Eeprom_data
-                    FnameStart = Path.Combine(Application.StartupPath, "Calibration", globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) ;
+                    FnameStart = Path.Combine(Application.StartupPath, "Calibration", globals.PCM.EepromType.ToString() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver) ;
                 else
                     FnameStart = Path.Combine(Application.StartupPath, "Calibration", globals.GetOSid() + "-" + globals.PcmSegments[s].Name + "-" + globals.PcmSegments[s].PN.ToString() + "-" + globals.PcmSegments[s].Ver);
                 string SegFname = FnameStart + ".calsegment";

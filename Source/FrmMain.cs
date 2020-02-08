@@ -41,19 +41,37 @@ namespace PCMBinBuilder
                 string FileName = globals.SelectFile();
                 if (FileName.Length < 1)
                     return;
-                globals.GetPcmType(FileName);
-                if(globals.PcmType == "Unknown")
+                globals.PCMinfo P = globals.GetPcmType(FileName);
+                if(P.Type == "Unknown")
                 {
                     MessageBox.Show("Unknown file", "Unknown file");
                     return;
                 }
-                byte[] buf = globals.ReadBin(FileName, 0, globals.BinSize);
+                byte[] buf = globals.ReadBin(FileName, 0, P.BinSize);
 
                 FrmFileinfo frmX = new FrmFileinfo();
                 frmX.Show(this);
 
-                string Finfo = globals.PcmFileInfo(FileName);
-                frmX.labelFileInfo.Text = Finfo;
+                if (radioSingleInfo.Checked) 
+                { 
+                    frmX.textBox1.Text = Path.GetFileName(FileName) + Environment.NewLine + Environment.NewLine;
+                    string Finfo = globals.PcmFileInfo(FileName);
+                    frmX.textBox1.Text += Finfo;
+                }
+                else
+                {
+                    frmX.textBox1.Text = "";
+                    string Fldr = Path.GetDirectoryName(FileName);
+                    DirectoryInfo d = new DirectoryInfo(Fldr);
+                    FileInfo[] Files = d.GetFiles("*.bin");
+                    foreach (FileInfo file in Files)
+                    {
+                        frmX.textBox1.AppendText( file.Name + Environment.NewLine + Environment.NewLine);
+                        string Finfo = globals.PcmFileInfo(FileName);
+                        frmX.textBox1.AppendText(Finfo + Environment.NewLine);
+                        Application.DoEvents();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -88,6 +106,11 @@ namespace PCMBinBuilder
             frm2.Text = "Extracting segments";
             frm2.Show(this);
             frm2.StartExtractSegments(radioMulti.Checked);
+        }
+
+        private void radioSingleInfo_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 
