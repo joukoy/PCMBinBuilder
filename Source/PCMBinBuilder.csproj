@@ -59,6 +59,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="frmExtract.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmExtract.Designer.cs">
+      <DependentUpon>frmExtract.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmPCMModel.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -113,9 +119,12 @@
     <Compile Include="frmModifyBin.Designer.cs">
       <DependentUpon>frmModifyBin.cs</DependentUpon>
     </Compile>
-    <Compile Include="globals.cs" />
+    <Compile Include="PCmFunctions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="frmExtract.resx">
+      <DependentUpon>frmExtract.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FrmPCMModel.resx">
       <DependentUpon>FrmPCMModel.cs</DependentUpon>
     </EmbeddedResource>

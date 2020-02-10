@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -19,16 +20,18 @@ namespace PCMBinBuilder
 
         public static int SegNr;
         private static Button btnCaller;
+        public PCMData PCM1;
 
         private void FrmModifyBin_Load(object sender, EventArgs e)
         {
 
         }
 
-        public void LoadOSFiles(Button btn)
-        {
-            
+        public void LoadOSFiles(Button btn, ref PCMData PCM)
+        {            
             btnCaller = btn as Button;
+
+            PCM1 = PCM;
 
             radioButton2.Checked = true;
             listView1.Enabled = true;
@@ -61,7 +64,7 @@ namespace PCMBinBuilder
 
         }
 
-        public void LoadCalibrations(Button btn)
+        public void LoadCalibrations(Button btn, ref PCMData PCM)
         {
             //listView1.Enabled = true;
             btnCaller = btn as Button;
@@ -72,23 +75,25 @@ namespace PCMBinBuilder
             listView1.Columns[0].Width = 100;
             listView1.Columns[1].Width = 600;
             SegNr = (int)this.Tag;
-            string SegmentName = globals.PcmSegments[SegNr].Name;
+            string SegmentName = SegmentNames[SegNr];
+
+            PCM1 = PCM;
 
             string CalFolder = Path.Combine(Application.StartupPath, "Calibration");
             DirectoryInfo d = new DirectoryInfo(CalFolder);
             string FileFIlter;
             if (SegNr == 9) //Eeprom_data
-                FileFIlter = globals.PCM.EepromType.ToString()+"-"+ SegmentName + "*.calsegment";
+                FileFIlter = PCM1.EepromType.ToString()+"-"+ SegmentName + "*.calsegment";
             else
-                FileFIlter = globals.GetOSid() + "-" + SegmentName + "*.calsegment";
+                FileFIlter = PCM1.Segments[1].PN.ToString() + "-" + SegmentName + "*.calsegment";
             FileInfo[] Files = d.GetFiles(FileFIlter);
             foreach (FileInfo file in Files)
             {
                 string CalName = file.Name.Replace(".calsegment", "");
                 if (SegNr == 9)
-                    CalName = CalName.Replace(globals.PCM.EepromType.ToString() + "-" + SegmentName + "-", "");
+                    CalName = CalName.Replace(PCM1.EepromType.ToString() + "-" + SegmentName + "-", "");
                 else
-                    CalName = CalName.Replace(globals.GetOSid() + "-" + SegmentName + "-", "");
+                    CalName = CalName.Replace(PCM1.Segments[1].PN.ToString() + "-" + SegmentName + "-", "");
                 var item = new ListViewItem(CalName);
                 item.Tag = file.FullName;
                 string DescrFile = file.FullName +  ".txt";
@@ -106,7 +111,7 @@ namespace PCMBinBuilder
         }
 
 
-        public void LoadPatches()
+        public void LoadPatches(PCMData PCM)
         {
             //listView1.Enabled = true;
             listView1.Clear();
@@ -120,18 +125,20 @@ namespace PCMBinBuilder
             radioButton3.Visible = false;
             txtCalFile.Visible = false;
             btnBrowse.Visible = false;
+
+            PCM1 = PCM;
             string CalFolder = Path.Combine(Application.StartupPath, "Patches");
             DirectoryInfo d = new DirectoryInfo(CalFolder);
             
-            FileInfo[] Files = d.GetFiles(globals.GetOSid() + "*.pcmpatch");
+            FileInfo[] Files = d.GetFiles(PCM1.Segments[1].PN.ToString() + "*.pcmpatch");
             foreach (FileInfo file in Files)
             {
                 string CalName = file.Name;
-                CalName = CalName.Replace(globals.GetOSid() +"-" , "");
+                CalName = CalName.Replace(PCM1.Segments[1].PN.ToString() + "-" , "");
                 CalName = CalName.Replace(".pcmpatch", "");
                 var item = new ListViewItem(CalName);
                 item.Tag = file.FullName;
-                foreach (globals.Patch P in globals.PatchList)
+                foreach (Patch P in PCM1.PatchList)
                     if (CalName == P.Name)
                         item.Checked = true;
                 listView1.Items.Add(item);
@@ -168,7 +175,7 @@ namespace PCMBinBuilder
         private void btnBrowse_Click(object sender, EventArgs e)
         {
             radioButton3.Checked = true;
-            string FileName = globals.SelectFile("Load segment from file",true);
+            string FileName = SelectFile("Load segment from file",true);
             if (FileName.Length > 1)
             {
                 txtCalFile.Text = FileName;
@@ -204,14 +211,14 @@ namespace PCMBinBuilder
 
             if (labelSelectOS.Text=="Select patches")
             {
-                globals.PatchList.Clear();
+                PCM1.PatchList.Clear();
                 for (int i = 0; i < listView1.CheckedItems.Count; i++)
                 {
-                    globals.Patch P;
+                    Patch P;
                     P.Name = listView1.CheckedItems[i].Text;
                     P.Description = listView1.CheckedItems[i].SubItems[0].Text;
                     P.FileName = listView1.CheckedItems[i].Tag.ToString();
-                    globals.PatchList.Add(P);
+                    PCM1.PatchList.Add(P);
                     
                 }
                 this.DialogResult = DialogResult.OK;
@@ -230,39 +237,38 @@ namespace PCMBinBuilder
                     SrcFile = txtCalFile.Text;
 
                 }
-                globals.PcmSegments[SegNr].Source = SrcFile;
+                //PCM1.Segments[SegNr].Source = SrcFile;
                 frmAction frmA = new frmAction();
-                frmA.Show(this);
+                frmA.Show();
                 if (SegNr > 1) //CAL segments
                 {
                     if (SegNr == 9) { 
-                        if (!frmA.LoadEepromData(SrcFile))
+                        if (!frmA.LoadEepromData(SrcFile, ref PCM1))
                             return;
                     }
                     else { 
-                        if (!frmA.LoadCalSegment(SegNr, SrcFile))
+                        if (!frmA.LoadCalSegment(SegNr, SrcFile, ref PCM1))
                             return;
                     }
                 }
-                else
+                else //OS 
                 {
-                    if (!frmA.LoadOS(SrcFile))
+                    if (!frmA.LoadOS(SrcFile, ref PCM1))
                         return;
                 }
                 if (btnCaller != null) { 
                     if (btnCaller.Text == "Build new BIN") //FrmMain
                     {
-                        FrmSegmentList FrmB = new FrmSegmentList();
-                        FrmB.Show();
-                        FrmB.StartBuilding();
+                        this.DialogResult = DialogResult.OK;
                         this.Close();
                     }
                     else //From frmSegmentList 
                     { 
-                        btnCaller.Text =  globals.PcmSegments[SegNr].Name + ":  " + globals.PcmSegments[SegNr].PN.ToString() + " " + globals.PcmSegments[SegNr].Ver;
+                        btnCaller.Text = SegmentNames[SegNr] + ":  " + PCM1.Segments[SegNr].PN.ToString() + " " + PCM1.Segments[SegNr].Ver;
                         this.Close();
                     }
                 }
+                this.DialogResult = DialogResult.OK;
             }
         }
 

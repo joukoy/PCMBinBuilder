@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -17,37 +18,34 @@ namespace PCMBinBuilder
             InitializeComponent();
         }
 
-
         private void btnCreatePatch_Click(object sender, EventArgs e)
         {
-            globals.CleanMe();
             FrmPatcher frm2 = new FrmPatcher();
             frm2.addCheckBoxes();
-            frm2.Show(this);
-
+            frm2.ShowDialog(this);
         }
-
 
         private void FrmMain_Load(object sender, EventArgs e)
         {
-            globals.InitializeMe();
+            InitializeMe();
         }
 
         private void btnFileInfo_Click(object sender, EventArgs e)
         {
             try 
             { 
-                globals.CleanMe();
-                string FileName = globals.SelectFile();
+                string FileName = SelectFile();
                 if (FileName.Length < 1)
                     return;
-                globals.PCMinfo P = globals.GetPcmType(FileName);
-                if(P.Type == "Unknown")
+
+                PCMData PCM = InitPCM();
+                GetPcmType(FileName,ref PCM);
+                if(PCM.Type == "Unknown")
                 {
                     MessageBox.Show("Unknown file", "Unknown file");
                     return;
                 }
-                byte[] buf = globals.ReadBin(FileName, 0, P.BinSize);
+                byte[] buf = ReadBin(FileName, 0, (uint)PCM.FileSize);
 
                 FrmFileinfo frmX = new FrmFileinfo();
                 frmX.Show(this);
@@ -55,7 +53,7 @@ namespace PCMBinBuilder
                 if (radioSingleInfo.Checked) 
                 { 
                     frmX.textBox1.Text = Path.GetFileName(FileName) + Environment.NewLine + Environment.NewLine;
-                    string Finfo = globals.PcmFileInfo(FileName);
+                    string Finfo = PcmFileInfo(FileName, PCM);
                     frmX.textBox1.Text += Finfo;
                 }
                 else
@@ -67,7 +65,7 @@ namespace PCMBinBuilder
                     foreach (FileInfo file in Files)
                     {
                         frmX.textBox1.AppendText( file.Name + Environment.NewLine + Environment.NewLine);
-                        string Finfo = globals.PcmFileInfo(FileName);
+                        string Finfo = PcmFileInfo(file.FullName,PCM);
                         frmX.textBox1.AppendText(Finfo + Environment.NewLine);
                         Application.DoEvents();
                     }
@@ -82,30 +80,35 @@ namespace PCMBinBuilder
 
         private void btnBuildBin_Click(object sender, EventArgs e)
         {
-            globals.CleanMe();
-            FrmSelectSegment frm2 = new FrmSelectSegment();
-            frm2.Text = "Select OS";
-            frm2.labelSelectOS.Text = frm2.Text;
-            frm2.Tag = 1;
-            frm2.Show();
-            frm2.LoadOSFiles(sender as Button);
+            FrmSelectSegment frmSel = new FrmSelectSegment();
+            frmSel.Text = "Select OS";
+            frmSel.labelSelectOS.Text = frmSel.Text;
+            frmSel.Tag = 1;
+            PCMData PCM = InitPCM();
+            frmSel.LoadOSFiles(sender as Button, ref PCM);
+            if (frmSel.ShowDialog() == DialogResult.OK)
+            {
+                PCM = frmSel.PCM1;
+                frmSel.Dispose();
+                FrmSegmentList FrmB = new FrmSegmentList();
+                FrmB.Show();
+                FrmB.StartBuilding(ref PCM);
+            }
         }
 
         private void btnModifyBin_Click(object sender, EventArgs e)
         {
-            globals.CleanMe();
-            FrmModBin FrmB = new FrmModBin();
-            FrmB.Show(this);
-            FrmB.LoadBasefile();
+            FrmModBin FrmMod = new FrmModBin();
+            FrmMod.LoadBasefile();
+            FrmMod.ShowDialog(this);
+            FrmMod.Dispose();
         }
 
         private void btnExtract_Click(object sender, EventArgs e)
         {
-            globals.CleanMe();
-            frmAction frm2 = new frmAction();
-            frm2.Text = "Extracting segments";
-            frm2.Show(this);
-            frm2.StartExtractSegments(radioMulti.Checked);
+            frmExtract frmEx = new frmExtract();
+            frmEx.ShowDialog(this);
+            frmEx.Dispose();
         }
 
         private void radioSingleInfo_CheckedChanged(object sender, EventArgs e)

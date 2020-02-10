@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -24,7 +25,7 @@ namespace PCMBinBuilder
         {
             if (this.Text == "Enter VIN Code")
             {
-                TextBox1.Text = globals.ValidateVIN(TextBox1.Text);
+                TextBox1.Text = ValidateVIN(TextBox1.Text);
                 if (TextBox1.Text.Length != 17)
                 {
                     MessageBox.Show("VIN code must be 17 digits long!","Check VIN Length");
@@ -50,10 +51,10 @@ namespace PCMBinBuilder
         {
             
             try {
-                string VINfile = globals.SelectFile("Load VIN from file");
+                string VINfile = SelectFile("Load VIN from file");
                 if (VINfile.Length > 1)
                 {
-                    TextBox1.Text = globals.ReadVIN(VINfile);
+                    TextBox1.Text = ReadVIN(VINfile);
                 }
             }
             catch (Exception ex)

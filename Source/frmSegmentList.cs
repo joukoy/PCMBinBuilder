@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -24,20 +25,22 @@ namespace PCMBinBuilder
             
         }
 
+        public PCMData PCM1;
 
-        public void StartBuilding()
+        public void StartBuilding(ref PCMData PCM)
         {
-            labelOS.Text = globals.GetOSid() + " " + globals.GetOSVer();
-            labelPCM.Text = globals.PCM.Model;
+            PCM1 = PCM; //Store in local object
+            labelOS.Text = PCM1.Segments[1].PN + " " + PCM1.Segments[1].Ver;
+            labelPCM.Text = PCM1.Model;
             int i = 1;
             for (int s = 2; s <= 9; s++)
             {
                 Button newButton = new Button();
                 this.Controls.Add(newButton);
-                if (globals.PcmSegments[s].Source == "")
-                    newButton.Text = globals.PcmSegments[s].Name;
+                if (PCM1.Segments[s].Source == "")
+                    newButton.Text = SegmentNames[s];
                 else
-                    newButton.Text = globals.PcmSegments[s].Name + ":  " + globals.PcmSegments[s].PN.ToString() + " " + globals.PcmSegments[s].Ver;
+                    newButton.Text = SegmentNames[s] + ":  " + PCM1.Segments[s].PN.ToString() + " " + PCM1.Segments[s].Ver;
                 newButton.Location = new Point(10, (i * 30));
                 newButton.Size = new Size(350, 25);
                 newButton.Click += new System.EventHandler(this.newButton_Click);
@@ -53,7 +56,6 @@ namespace PCMBinBuilder
             VINButton.Size = new Size(350, 25);
             VINButton.Click += new System.EventHandler(this.VINButton_Click);
             VINButton.Tag = 20;
-
 
             i++;
             //Add button for Patches
@@ -76,14 +78,15 @@ namespace PCMBinBuilder
             frm2.Text = "Select patches"; 
             frm2.labelSelectOS.Text = frm2.Text;
             frm2.Tag = 30;
-            frm2.LoadPatches();
+            frm2.LoadPatches(PCM1);
 
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
-                if (globals.PatchList.Count > 0)
+                PCM1 = frm2.PCM1;
+                if (PCM1.PatchList.Count > 0)
                 {
                     button.Text = "Patches: ";
-                    foreach (globals.Patch P in globals.PatchList)
+                    foreach (Patch P in PCM1.PatchList)
                         button.Text += P.Name + ", ";
 
                 }
@@ -100,10 +103,10 @@ namespace PCMBinBuilder
 
             Button button = sender as Button;
 
-            if (button.Text == "VIN")
-                VinDialog.TextBox1.Text = "";
+            if (PCM1.NewVIN != "")
+                VinDialog.TextBox1.Text = PCM1.NewVIN;
             else
-                VinDialog.TextBox1.Text = button.Text.Replace("VIN: ", "");
+                VinDialog.TextBox1.Text = PCM1.VIN;
             VinDialog.Text = "Enter VIN Code";
             VinDialog.label1.Text = "Enter VIN Code";
             VinDialog.btnReadFromFile.Visible = true;
@@ -113,8 +116,8 @@ namespace PCMBinBuilder
             if (VinDialog.ShowDialog(this) == DialogResult.OK)
             {
                 // Read the contents of VinDialog's TextBox.
-                globals.NewVIN = VinDialog.TextBox1.Text;
-                button.Text = "VIN: " + globals.NewVIN;
+                PCM1.NewVIN = VinDialog.TextBox1.Text;
+                button.Text = "VIN: " + PCM1.NewVIN;
             }
             VinDialog.Dispose();
         }
@@ -125,19 +128,37 @@ namespace PCMBinBuilder
             int SegNr = (int)CurrentButton.Tag;
 
             FrmSelectSegment frm2 = new FrmSelectSegment();
-            frm2.Text = "Select " + globals.PcmSegments[SegNr].Name;
+            frm2.Text = "Select " + SegmentNames[SegNr];
             frm2.Tag = SegNr;
             frm2.labelSelectOS.Text = frm2.Text;
             
-            frm2.LoadCalibrations( CurrentButton);
-            frm2.Show();
+            frm2.LoadCalibrations(CurrentButton, ref PCM1);
+            if (frm2.ShowDialog(this) == DialogResult.OK)
+            {
+                PCM1 = frm2.PCM1;
+                if (SegNr == 9)
+                {
+                    for (int i=0; i< this.Controls.Count; i++)
+                    {
+                        if (this.Controls[i].Tag != null && (int)this.Controls[i].Tag == 20)
+                        {
+                            Button VinBtn = this.Controls[i] as Button;
+                            if (PCM1.NewVIN =="")
+                                VinBtn.Text = "VIN: " + PCM1.VIN;
+                            else
+                                VinBtn.Text = "VIN: " + PCM1.NewVIN;
+                        }
+                    }
+                }
+            }
+            frm2.Dispose();
         }
 
         private void btnApply_Click(object sender, EventArgs e)
         {
             if (this.Text == "Select segments to swap")
             { 
-                //Return back to "Modify BIN
+                //Return back to "Modify BIN"
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -145,7 +166,7 @@ namespace PCMBinBuilder
             {
                 for (int s=2; s<=9; s++)
                 {
-                    if (globals.PcmSegments[s].Source == "")
+                    if (PCM1.Segments[s].Source == "")
                     {
                         MessageBox.Show("Please select all segments!", "Please select segments");
                         return;
@@ -154,10 +175,7 @@ namespace PCMBinBuilder
                 }
                 frmAction frmA = new frmAction();
                 frmA.Show(this);
-                if (frmA.CreateBinary()) 
-                {
-                    //this.Close();
-                }
+                frmA.CreateBinary(PCM1);
             }
 
         }

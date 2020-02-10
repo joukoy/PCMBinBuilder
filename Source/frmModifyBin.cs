@@ -6,6 +6,8 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -20,39 +22,50 @@ namespace PCMBinBuilder
         {
 
         }
+
+        private static PCMData PCM1;
+
         public void LoadBasefile()
         {
             this.Text = "Modify BIN";
-            string FileName = globals.SelectFile();
+            string FileName = SelectFile();
             if (FileName.Length < 1)
                 return;
-            globals.PcmSegments[1].Source = FileName;
+            long fsize = new System.IO.FileInfo(FileName).Length;
+            if (fsize != (512*1024) && fsize != (1024*1024))
+            {
+                MessageBox.Show("Unknown file", "Unknown file");
+                return;
+            }
+            PCM1 = InitPCM();
+            PCM1.Segments[1].Source = FileName;
             frmAction frmA = new frmAction();
-            frmA.Show(this);
-            if (!frmA.LoadOS(FileName))
+            frmA.Show();
+            if (!frmA.LoadOS(FileName, ref PCM1))
                return;
-            labelBaseFile.Text = FileName;
-            labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data,globals.PCM);
+            labelBaseFile.Text = Path.GetFileName(FileName);
+            labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data,PCM1);
+            
         }
 
         private void btnApply_Click(object sender, EventArgs e)
         {
             frmAction frmA = new frmAction();
-            frmA.Show();
-            if (frmA.CreateBinary())
-                this.Close();
+            frmA.Show(this);
+            frmA.CreateBinary(PCM1);
         }
 
         private void btnSwapSegments_Click(object sender, EventArgs e)
         {
             FrmSegmentList frm2 = new FrmSegmentList();
             frm2.Text = "Select segments to swap";
-            frm2.StartBuilding();
+            frm2.StartBuilding(ref PCM1);
             if (frm2.ShowDialog(this) == DialogResult.OK)
             {
-                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
+                PCM1 = frm2.PCM1;
+                labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
                 //labelBinInfo.Text += Environment.NewLine + "Modifications: " + Environment.NewLine;
-                labelMods.Text = globals.GetModifications();
+                labelMods.Text = GetModifications(PCM1);
             }
             frm2.Dispose();
 
@@ -69,10 +82,10 @@ namespace PCMBinBuilder
 
             Button button = sender as Button;
 
-            if (globals.NewVIN != "")
-                VinDialog.TextBox1.Text = globals.NewVIN;
+            if (PCM1.NewVIN != "")
+                VinDialog.TextBox1.Text = PCM1.NewVIN;
             else
-                VinDialog.TextBox1.Text = globals.VIN;
+                VinDialog.TextBox1.Text = PCM1.VIN;
             VinDialog.Text = "Enter VIN Code";
             VinDialog.label1.Text = "Enter VIN Code";
             VinDialog.AcceptButton = VinDialog.btnOK;
@@ -82,10 +95,10 @@ namespace PCMBinBuilder
             if (VinDialog.ShowDialog(this) == DialogResult.OK)
             {
                 // Read the contents of VinDialog's TextBox.
-                globals.NewVIN = VinDialog.TextBox1.Text;
-                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
+                PCM1.NewVIN = VinDialog.TextBox1.Text;
+                labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
                 //labelBinInfo.Text += Environment.NewLine + "Modifications: " + Environment.NewLine;
-                labelMods.Text = globals.GetModifications();
+                labelMods.Text = GetModifications(PCM1);
             }
             VinDialog.Dispose();
 
@@ -93,18 +106,19 @@ namespace PCMBinBuilder
 
         private void btnAddPatches_Click(object sender, EventArgs e)
         {
-            FrmSelectSegment frm2 = new FrmSelectSegment();
-            frm2.Text = "Select patches";
-            frm2.labelSelectOS.Text = frm2.Text;
-            frm2.Tag = 40;
-            frm2.LoadPatches();
+            FrmSelectSegment frmSS = new FrmSelectSegment();
+            frmSS.Text = "Select patches";
+            frmSS.labelSelectOS.Text = frmSS.Text;
+            frmSS.Tag = 40;
+            frmSS.LoadPatches(PCM1);
 
-            if (frm2.ShowDialog(this) == DialogResult.OK)
+            if (frmSS.ShowDialog(this) == DialogResult.OK)
             {
-                frm2.Dispose();
-                labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
+                PCM1 = frmSS.PCM1;
+                frmSS.Dispose();
+                labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
                 //labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
-                labelMods.Text = globals.GetModifications();
+                labelMods.Text = GetModifications(PCM1);
             }
 
         }
@@ -112,11 +126,11 @@ namespace PCMBinBuilder
         private void btnFixCheckSums_Click(object sender, EventArgs e)
         {
             frmAction frmA = new frmAction();
-            frmA.Show(this);
-            frmA.FixSchekSums(ref globals.PcmSegments[1].Data);
-            labelBinInfo.Text = globals.PcmBufInfo(globals.PcmSegments[1].Data, globals.PCM);
+            frmA.FixSchekSums(ref PCM1.Segments[1].Data ,ref PCM1);
+            labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
             //labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
-            labelMods.Text = globals.GetModifications();
+            labelMods.Text = GetModifications(PCM1);
+            frmA.ShowDialog(this);
 
         }
     }

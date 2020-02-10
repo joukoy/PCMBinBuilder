@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
-
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -26,7 +26,7 @@ namespace PCMBinBuilder
 
         private void btnOrgFile_Click(object sender, EventArgs e)
         {
-            string BinFile = globals.SelectFile();
+            string BinFile = SelectFile();
             if (BinFile.Length > 1)
             {
                 txtBaseFile.Text = BinFile;
@@ -35,7 +35,7 @@ namespace PCMBinBuilder
 
         private void btnModFile_Click(object sender, EventArgs e)
         {
-            string BinFile = globals.SelectFile();
+            string BinFile = SelectFile();
             if (BinFile.Length > 1)
             {
                 txtModifierFile.Text = BinFile;
@@ -73,36 +73,43 @@ namespace PCMBinBuilder
                     MessageBox.Show("Unknown file size (" + fsize.ToString() + "),will not compare!");
                     return;
                 }
+
                 byte[] BaseFile = new byte[fsize];
                 byte[] ModifierFile = new byte[fsize];
                 PatchAddr = new List<uint>();
                 PatchData = new List<uint>();
 
-                globals.PCMinfo BasePCM = globals.GetPcmType(txtBaseFile.Text);
-                globals.PCMinfo ModPCM = globals.GetPcmType(txtModifierFile.Text);
-                if (BasePCM.Model != ModPCM.Model)
+                PCMData BasePCM = InitPCM();
+                PCMData ModPCM = InitPCM();
+
+                GetPcmType(txtBaseFile.Text, ref BasePCM);
+                GetPcmType(txtModifierFile.Text, ref ModPCM);
+
+                uint BaseOS = GetOsidFromFile(txtBaseFile.Text);
+                uint ModOS = GetOsidFromFile(txtModifierFile.Text);
+                if (BaseOS != ModOS)
                 {
-                    MessageBox.Show("Files are not from same PCM model, will not compare!");
+                    MessageBox.Show("File1 OS = " + BaseOS.ToString() + ", File2 OS = " + ModOS.ToString() + Environment.NewLine + "Will not compare!", "OS Mismatch");
                     return;
                 }
-                BaseFile = globals.ReadBin(txtBaseFile.Text, 0, (uint)fsize);
-                globals.GetSegmentAddresses(BaseFile, BasePCM);
-                labelOS.Text = globals.GetOSid().ToString();
-                ModifierFile = globals.ReadBin(txtModifierFile.Text, 0, (uint)fsize);
+                BaseFile = ReadBin(txtBaseFile.Text, 0, (uint)fsize);
+                GetSegmentAddresses(BaseFile,ref BasePCM);
+                labelOS.Text = BasePCM.Segments[1].PN.ToString();
+                ModifierFile = ReadBin(txtModifierFile.Text, 0, (uint)fsize);
                 txtResult.Text = "";
                 for (int i = 0; i < this.Controls.Count; i++)
                 {
                     if (this.Controls[i].Tag != null)
                     {
                         int s = (int)this.Controls[i].Tag;
-                        if (this.Controls[i].Text == globals.PcmSegments[s].Name)
+                        if (this.Controls[i].Text == SegmentNames[s])
                         {
                             CheckBox chk = this.Controls[i] as CheckBox;
                             if (chk.Checked)
                             {
-                                CompareSegment(globals.PcmSegments[s].Start, globals.PcmSegments[s].Length, BaseFile, ModifierFile);
+                                CompareSegment(BasePCM.Segments[s].Start, BasePCM.Segments[s].Length, BaseFile, ModifierFile);
                                 if (s == 1) //If OS is selected, compare OS2 segment, too
-                                    CompareSegment(globals.PcmSegments[0].Start, globals.PcmSegments[0].Length, BaseFile, ModifierFile);
+                                    CompareSegment(BasePCM.Segments[0].Start, BasePCM.Segments[0].Length, BaseFile, ModifierFile);
                             }
                         }
                     }
@@ -181,7 +188,7 @@ namespace PCMBinBuilder
                 CheckBox chk = new CheckBox();
                 this.Controls.Add(chk);
                 chk.Location = new Point(Left, 77);
-                chk.Text = globals.PcmSegments[s].Name;
+                chk.Text = SegmentNames[s];
                 chk.AutoSize = true;
                 Left += chk.Width +5;
                 chk.Tag = s;

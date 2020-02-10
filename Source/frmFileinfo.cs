@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using static PcmFunctions;
 
 namespace PCMBinBuilder
 {
@@ -25,7 +26,7 @@ namespace PCMBinBuilder
         private void brtnSave_Click(object sender, EventArgs e)
         {
             try { 
-                string FileName = globals.SelectSaveFile("Text files (*.txt)|*.txt|All files (*.*)|*.*");
+                string FileName = SelectSaveFile("Text files (*.txt)|*.txt|All files (*.*)|*.*");
                 if (FileName.Length>1)
                 {
                     StreamWriter sw = new StreamWriter(FileName);
@@ -37,6 +38,11 @@ namespace PCMBinBuilder
             {
                 MessageBox.Show("Error: " + ex.Message, "Error");
             }
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

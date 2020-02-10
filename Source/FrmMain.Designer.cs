@@ -35,14 +35,10 @@
             this.btnFileInfo = new System.Windows.Forms.Button();
             this.btnBuildBin = new System.Windows.Forms.Button();
             this.btnModifyBin = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.radioMulti = new System.Windows.Forms.RadioButton();
-            this.radioSingle = new System.Windows.Forms.RadioButton();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.radioSingleInfo = new System.Windows.Forms.RadioButton();
             this.radioMultiInfo = new System.Windows.Forms.RadioButton();
+            this.radioSingleInfo = new System.Windows.Forms.RadioButton();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -68,9 +64,9 @@
             // 
             // btnExtract
             // 
-            this.btnExtract.Location = new System.Drawing.Point(6, 65);
+            this.btnExtract.Location = new System.Drawing.Point(7, 103);
             this.btnExtract.Name = "btnExtract";
-            this.btnExtract.Size = new System.Drawing.Size(141, 27);
+            this.btnExtract.Size = new System.Drawing.Size(147, 27);
             this.btnExtract.TabIndex = 7;
             this.btnExtract.Text = "Extract calibrations";
             this.btnExtract.UseVisualStyleBackColor = true;
@@ -106,51 +102,27 @@
             this.btnModifyBin.UseVisualStyleBackColor = true;
             this.btnModifyBin.Click += new System.EventHandler(this.btnModifyBin_Click);
             // 
-            // groupBox1
-            // 
-            this.groupBox1.Controls.Add(this.radioMulti);
-            this.groupBox1.Controls.Add(this.radioSingle);
-            this.groupBox1.Controls.Add(this.btnExtract);
-            this.groupBox1.Location = new System.Drawing.Point(7, 196);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(166, 96);
-            this.groupBox1.TabIndex = 8;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Extract calibrations";
-            // 
-            // radioMulti
-            // 
-            this.radioMulti.AutoSize = true;
-            this.radioMulti.Location = new System.Drawing.Point(6, 42);
-            this.radioMulti.Name = "radioMulti";
-            this.radioMulti.Size = new System.Drawing.Size(155, 17);
-            this.radioMulti.TabIndex = 6;
-            this.radioMulti.Text = "All files in folder (select one)";
-            this.radioMulti.UseVisualStyleBackColor = true;
-            // 
-            // radioSingle
-            // 
-            this.radioSingle.AutoSize = true;
-            this.radioSingle.Checked = true;
-            this.radioSingle.Location = new System.Drawing.Point(6, 19);
-            this.radioSingle.Name = "radioSingle";
-            this.radioSingle.Size = new System.Drawing.Size(70, 17);
-            this.radioSingle.TabIndex = 5;
-            this.radioSingle.TabStop = true;
-            this.radioSingle.Text = "Single file";
-            this.radioSingle.UseVisualStyleBackColor = true;
-            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.radioMultiInfo);
             this.groupBox2.Controls.Add(this.radioSingleInfo);
             this.groupBox2.Controls.Add(this.btnFileInfo);
-            this.groupBox2.Location = new System.Drawing.Point(7, 103);
+            this.groupBox2.Location = new System.Drawing.Point(7, 138);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(165, 90);
+            this.groupBox2.Size = new System.Drawing.Size(165, 93);
             this.groupBox2.TabIndex = 9;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "BIN file info";
+            // 
+            // radioMultiInfo
+            // 
+            this.radioMultiInfo.AutoSize = true;
+            this.radioMultiInfo.Location = new System.Drawing.Point(3, 39);
+            this.radioMultiInfo.Name = "radioMultiInfo";
+            this.radioMultiInfo.Size = new System.Drawing.Size(155, 17);
+            this.radioMultiInfo.TabIndex = 3;
+            this.radioMultiInfo.Text = "All files in folder (select one)";
+            this.radioMultiInfo.UseVisualStyleBackColor = true;
             // 
             // radioSingleInfo
             // 
@@ -165,23 +137,13 @@
             this.radioSingleInfo.UseVisualStyleBackColor = true;
             this.radioSingleInfo.CheckedChanged += new System.EventHandler(this.radioSingleInfo_CheckedChanged);
             // 
-            // radioMultiInfo
-            // 
-            this.radioMultiInfo.AutoSize = true;
-            this.radioMultiInfo.Location = new System.Drawing.Point(3, 39);
-            this.radioMultiInfo.Name = "radioMultiInfo";
-            this.radioMultiInfo.Size = new System.Drawing.Size(155, 17);
-            this.radioMultiInfo.TabIndex = 3;
-            this.radioMultiInfo.Text = "All files in folder (select one)";
-            this.radioMultiInfo.UseVisualStyleBackColor = true;
-            // 
             // FrmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(502, 296);
+            this.ClientSize = new System.Drawing.Size(502, 239);
             this.Controls.Add(this.groupBox2);
-            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.btnExtract);
             this.Controls.Add(this.btnModifyBin);
             this.Controls.Add(this.btnBuildBin);
             this.Controls.Add(this.pictureBox1);
@@ -191,8 +153,6 @@
             this.Text = "PCM BIN Builder";
             this.Load += new System.EventHandler(this.FrmMain_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
@@ -206,9 +166,6 @@
         private System.Windows.Forms.Button btnFileInfo;
         private System.Windows.Forms.Button btnBuildBin;
         private System.Windows.Forms.Button btnModifyBin;
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.RadioButton radioMulti;
-        private System.Windows.Forms.RadioButton radioSingle;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.RadioButton radioMultiInfo;
         private System.Windows.Forms.RadioButton radioSingleInfo;
