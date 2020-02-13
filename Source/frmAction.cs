@@ -373,10 +373,20 @@ namespace PCMBinBuilder
                     string Msg = "Error: " + Environment.NewLine;
                     Msg += "Incompatible Eeprom!" + Environment.NewLine;
                     if (PCM.EepromType == 1999)
-                        Msg += "PCM model " + PCM.Model + " is compatible only Eeprom from year 1999-2000";
-                    else
-                        Msg += "PCM model " + PCM.Model + " is compatible only Eeprom from year 2001 and newer";
-                    throw new FileLoadException(Msg);
+                    { 
+                        Msg += "PCM model " + PCM.Model + " is compatible only with Eeprom from year 1999-2000";
+                        throw new FileLoadException(Msg);
+                    }
+                    else if (PCM.EepromType == 2001)
+                    { 
+                        Msg += "PCM model " + PCM.Model + " is compatible only with Eeprom from year 2001 and newer";
+                        throw new FileLoadException(Msg);
+                    }
+                    else if(PCM.EepromType == 0)
+                    {
+                        MessageBox.Show("X");
+                    }
+
                 }
                 GetEEpromInfo(tmpData, ref PCM);
                 if (PCM.Segments[9].Ver == "")

@@ -152,6 +152,7 @@
             this.Controls.Add(this.btnExtract);
             this.Name = "frmExtract";
             this.Text = "Extract segments";
+            this.Load += new System.EventHandler(this.frmExtract_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);

@@ -286,6 +286,65 @@ public class PcmFunctions
         return PcmBufInfo(buf, PCM);
     }
 
+    public static void AskPCMModel(ref PCMData PCM, bool P01)
+    {
+        PCMBinBuilder.frmPCMModel frmP = new PCMBinBuilder.frmPCMModel();
+        if (P01)
+            frmP.radioP59.Visible = false;
+        if (frmP.ShowDialog() == DialogResult.OK)
+        {
+            if (frmP.radioP59.Checked)
+            {
+                PCM.Type = "P59";
+                PCM.Model = "P59";
+                PCM.BinSize = (512 * 1024);
+                PCM.EepromType = 2001;
+            }
+            else if (frmP.radioP01.Checked)
+            {
+                PCM.Type = "P01";
+                PCM.BinSize = (512 * 1024);
+                PCM.Model = "P01(01-03)";
+                PCM.EepromType = 2001;
+            }
+            else if (frmP.radioP0199.Checked)
+            {
+                PCM.Type = "P01";
+                PCM.BinSize = (512 * 1024);
+                PCM.Model = "P01(99-00)";
+                PCM.EepromType = 1999;
+            }
+        }
+        frmP.Dispose();
+
+    }
+
+    public static void SetPCMModel(ref PCMData PCM, string Model)
+    {
+        if (Model == "P59")
+        {
+            PCM.Type = "P59";
+            PCM.Model = "P59";
+            PCM.BinSize = (1024 * 1024);
+            PCM.EepromType = 2001;
+        }
+        if (Model == "P01(01-03)")
+        {
+            PCM.Type = "P01";
+            PCM.BinSize = (512 * 1024);
+            PCM.Model = "P01(01-03)";
+            PCM.EepromType = 2001;
+        }
+        if (Model == "P01(99-00)")
+        {
+            PCM.Type = "P01";
+            PCM.BinSize = (512 * 1024);
+            PCM.Model = "P01(99-00)";
+            PCM.EepromType = 1999;
+        }
+
+    }
+
     public static void GetPcmType(string FileName, ref PCMData PCM)
     {
         PCM.Type = "Unknown";
@@ -300,72 +359,36 @@ public class PcmFunctions
         }
         if (PCM.FileSize == (512*1024)) //P01
         {
-            PCM.Type = "P01";
-            PCM.BinSize = (512 * 1024);
             byte[] buf = ReadBin(FileName,0, (uint)PCM.FileSize);
             PCM.EepromType = GetModelFromEeprom(buf);
             if (PCM.EepromType == 1999)
-                PCM.Model = "P01(99-00)";
+                SetPCMModel(ref PCM, "P01(99-00)");
+            else if (PCM.EepromType == 2001)
+                SetPCMModel(ref PCM, "P01(01-03)");
             else
-                PCM.Model = "P01(01-03)";
+                return;
         }
         if (PCM.FileSize == (1024 * 1024)) //P59
         {
-            PCM.Type = "P59";
-            PCM.Model = "P59";
-            PCM.BinSize = (1024 * 1024);
-            PCM.EepromType = 2001;
+            SetPCMModel(ref PCM, "P59");
         }
         if (PCM.FileSize == 16384) //OS segment
         {
             if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P59")) 
             {
-                PCM.Type = "P59";
-                PCM.Model = "P59";
-                PCM.BinSize = (1024 * 1024);
-                PCM.EepromType = 2001;
+                SetPCMModel(ref PCM, "P59");
             }
             else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(01-03)")) 
             {
-                PCM.Type = "P01";
-                PCM.BinSize = (512 * 1024);
-                PCM.Model = "P01(01-03)";
-                PCM.EepromType = 2001;
+                SetPCMModel(ref PCM, "P01(01-03)");
             }
             else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(99-00)"))
             {
-                PCM.Type = "P01";
-                PCM.BinSize = (512 * 1024);
-                PCM.Model = "P01(99-00)";
-                PCM.EepromType = 1999;
+                SetPCMModel(ref PCM, "P01(99-00)");
             }
             else
             {
-                PCMBinBuilder.frmPCMModel frmP = new PCMBinBuilder.frmPCMModel();
-                if (frmP.ShowDialog() == DialogResult.OK)
-                {
-                    if (frmP.radioP59.Checked) 
-                    {
-                        PCM.Type = "P59";
-                        PCM.Model = "P59";
-                        PCM.BinSize = (512 * 1024);
-                        PCM.EepromType = 2001;
-                    }
-                    else if (frmP.radioP01.Checked)
-                    {
-                        PCM.Type = "P01";
-                        PCM.BinSize = (512 * 1024);
-                        PCM.Model = "P01(01-03)";
-                        PCM.EepromType = 2001;
-                    }
-                    else if (frmP.radioP0199.Checked)
-                    {
-                        PCM.Type = "P01";
-                        PCM.BinSize = (512 * 1024);
-                        PCM.Model = "P01(99-00)";
-                        PCM.EepromType = 1999;
-                    }
-                }
+                AskPCMModel(ref PCM,false);
             }
         }
 
@@ -470,13 +493,16 @@ public class PcmFunctions
         if (BitConverter.ToUInt16(buf, (int)CheckAddr) == 0xA0A5)
             return 1999;
         else
-            return 1;
+            return 1; //Unknown
     }
 
     public static string GetVIN(byte[] buf)
     {
         uint VINoffset = GetVINAddr(buf);
-
+        if (VINoffset == 1) //Error
+        {
+            return "?";
+        }
         return ValidateVIN(System.Text.Encoding.ASCII.GetString(buf, (int)VINoffset + 33, 17));
     }
 
@@ -511,6 +537,11 @@ public class PcmFunctions
         uint VINAddr = GetVINAddr(buf);
         string Ver;
         EepromKey Key;
+
+        if (VINAddr == 1) //Check word not found
+        {
+            return "Eeprom_data unreadable" + Environment.NewLine;
+        }
 
         PCM.Segments[9].PN = BEToUint32(buf, VINAddr + 4);
         Ver = System.Text.Encoding.ASCII.GetString(buf, (int)VINAddr + 28, 4);
