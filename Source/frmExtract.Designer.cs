@@ -38,17 +38,22 @@
             this.labelFile = new System.Windows.Forms.Label();
             this.labelDescr = new System.Windows.Forms.Label();
             this.txtDescr = new System.Windows.Forms.TextBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.radioSkip = new System.Windows.Forms.RadioButton();
+            this.radioReplace = new System.Windows.Forms.RadioButton();
+            this.radioRename = new System.Windows.Forms.RadioButton();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // txtStatus
             // 
             this.txtStatus.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtStatus.Location = new System.Drawing.Point(2, 101);
+            this.txtStatus.Location = new System.Drawing.Point(2, 143);
             this.txtStatus.Multiline = true;
             this.txtStatus.Name = "txtStatus";
             this.txtStatus.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.txtStatus.Size = new System.Drawing.Size(648, 298);
+            this.txtStatus.Size = new System.Drawing.Size(648, 389);
             this.txtStatus.TabIndex = 0;
             // 
             // groupBox1
@@ -137,11 +142,56 @@
             this.txtDescr.Size = new System.Drawing.Size(338, 20);
             this.txtDescr.TabIndex = 14;
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.radioRename);
+            this.groupBox2.Controls.Add(this.radioReplace);
+            this.groupBox2.Controls.Add(this.radioSkip);
+            this.groupBox2.Location = new System.Drawing.Point(2, 104);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(647, 39);
+            this.groupBox2.TabIndex = 16;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Duplicates";
+            // 
+            // radioSkip
+            // 
+            this.radioSkip.AutoSize = true;
+            this.radioSkip.Location = new System.Drawing.Point(240, 16);
+            this.radioSkip.Name = "radioSkip";
+            this.radioSkip.Size = new System.Drawing.Size(46, 17);
+            this.radioSkip.TabIndex = 0;
+            this.radioSkip.Text = "Skip";
+            this.radioSkip.UseVisualStyleBackColor = true;
+            // 
+            // radioReplace
+            // 
+            this.radioReplace.AutoSize = true;
+            this.radioReplace.Location = new System.Drawing.Point(114, 16);
+            this.radioReplace.Name = "radioReplace";
+            this.radioReplace.Size = new System.Drawing.Size(65, 17);
+            this.radioReplace.TabIndex = 1;
+            this.radioReplace.Text = "Replace";
+            this.radioReplace.UseVisualStyleBackColor = true;
+            // 
+            // radioRename
+            // 
+            this.radioRename.AutoSize = true;
+            this.radioRename.Checked = true;
+            this.radioRename.Location = new System.Drawing.Point(7, 16);
+            this.radioRename.Name = "radioRename";
+            this.radioRename.Size = new System.Drawing.Size(65, 17);
+            this.radioRename.TabIndex = 2;
+            this.radioRename.TabStop = true;
+            this.radioRename.Text = "Rename";
+            this.radioRename.UseVisualStyleBackColor = true;
+            // 
             // frmExtract
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(653, 404);
+            this.ClientSize = new System.Drawing.Size(653, 529);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.txtDescr);
             this.Controls.Add(this.labelDescr);
             this.Controls.Add(this.labelFile);
@@ -155,6 +205,8 @@
             this.Load += new System.EventHandler(this.frmExtract_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -172,5 +224,9 @@
         private System.Windows.Forms.Label labelFile;
         private System.Windows.Forms.Label labelDescr;
         private System.Windows.Forms.TextBox txtDescr;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.RadioButton radioRename;
+        private System.Windows.Forms.RadioButton radioReplace;
+        private System.Windows.Forms.RadioButton radioSkip;
     }
 }

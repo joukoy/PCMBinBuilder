@@ -352,7 +352,7 @@ public class PcmFunctions
         PCM.Model = "";
         PCM.EepromType = 0;
 
-        PCM.FileSize = new System.IO.FileInfo(FileName).Length;
+        PCM.FileSize = new FileInfo(FileName).Length;
         if (PCM.FileSize != (512*1024) && PCM.FileSize != (1024*1024) && PCM.FileSize != 16384)
         {
             return;

@@ -20,6 +20,9 @@ namespace PCMBinBuilder
 
         private static List<uint> PatchData;
         private static List<uint> PatchAddr;
+        private PCMData BasePCM;
+        private PCMData ModPCM;
+
         private void FrmPatcher_Load(object sender, EventArgs e)
         {
         }
@@ -29,7 +32,18 @@ namespace PCMBinBuilder
             string BinFile = SelectFile();
             if (BinFile.Length > 1)
             {
+                try { 
                 txtBaseFile.Text = BinFile;
+                BasePCM = InitPCM();
+                Logger("Original file:");
+                Logger(PcmFileInfo(BinFile, BasePCM));
+                if (txtModifierFile.Text != "")
+                    CheckSegmentCompatibility();
+                }
+                catch (Exception ex)
+                {
+                    Logger(ex.Message);
+                }
             }
         }
 
@@ -38,10 +52,59 @@ namespace PCMBinBuilder
             string BinFile = SelectFile();
             if (BinFile.Length > 1)
             {
+                try { 
                 txtModifierFile.Text = BinFile;
+                ModPCM = InitPCM();
+                Logger("Modified file:");
+                Logger(PcmFileInfo(BinFile, ModPCM));
+                if (txtBaseFile.Text != "")
+                    CheckSegmentCompatibility();
+                }
+                catch (Exception ex)
+                {
+                    Logger(ex.Message);
+                }
             }
-
         }
+
+        private void CheckSegmentCompatibility()
+        {
+            long fsize = new System.IO.FileInfo(txtBaseFile.Text).Length;
+            byte[] BaseFile = new byte[fsize];
+            byte[] ModifierFile = new byte[fsize];
+
+            GetPcmType(txtBaseFile.Text, ref BasePCM);
+            GetPcmType(txtModifierFile.Text, ref ModPCM);
+            BaseFile = ReadBin(txtBaseFile.Text, 0, (uint)fsize);
+            GetSegmentAddresses(BaseFile, ref BasePCM);
+            GetSegmentInfo(BaseFile, ref BasePCM);
+            ModifierFile = ReadBin(txtModifierFile.Text, 0, (uint)fsize);
+            GetSegmentAddresses(ModifierFile, ref ModPCM);
+            GetSegmentInfo(ModifierFile, ref ModPCM);
+            for (int s=1; s<=8; s++)
+            {
+                CheckBox chk = null;
+                for (int i = 0; i< this.Controls.Count; i++)
+                {
+                    if (this.Controls[i].Tag != null && (int)this.Controls[i].Tag == s)
+                    {
+                        chk = this.Controls[i] as CheckBox;
+                    }
+                }
+                if (BasePCM.Segments[s].PN != ModPCM.Segments[s].PN || BasePCM.Segments[s].Ver != ModPCM.Segments[s].Ver)
+                {
+                    Logger(SegmentNames[s].PadLeft(11) + " differ: " + BasePCM.Segments[s].PN.ToString().PadRight(8) + " " + BasePCM.Segments[s].Ver + " <> " + ModPCM.Segments[s].PN.ToString().PadRight(8) + " " + ModPCM.Segments[s].Ver);
+                    chk.Enabled = false;
+                    chk.Checked = false;
+                }
+                else
+                {
+                    chk.Enabled = true;
+                    chk.Checked = true;
+                }
+            }
+        }
+
         public void CompareSegment(uint StartAddress,uint Length,byte[] OrgFile, byte[] ModFile)
         {
             uint EndAddress = StartAddress + Length - 1;
@@ -79,8 +142,8 @@ namespace PCMBinBuilder
                 PatchAddr = new List<uint>();
                 PatchData = new List<uint>();
 
-                PCMData BasePCM = InitPCM();
-                PCMData ModPCM = InitPCM();
+                BasePCM = InitPCM();
+                ModPCM = InitPCM();
 
                 GetPcmType(txtBaseFile.Text, ref BasePCM);
                 GetPcmType(txtModifierFile.Text, ref ModPCM);

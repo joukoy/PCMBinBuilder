@@ -64,53 +64,88 @@ namespace PCMBinBuilder
             return Sel;
 
         }
+
+        private string SegmentFileName (string FnameStart, string Extension)
+        {
+            string FileName = FnameStart + Extension;
+            if (radioReplace.Checked)
+                return FileName;    
+
+            if (!File.Exists(FileName))
+            {
+                return FileName;
+            }
+
+            if (radioSkip.Checked)
+            {
+                Logger("Skipping duplicate file: " + FileName);
+                return "";
+            }
+
+            //radioRename checked
+            uint Fnr = 0;
+            while (File.Exists(FileName))
+            {
+                Fnr++;
+                FileName = FnameStart + "(" + Fnr.ToString() + ")" + Extension;
+            }
+            return FileName;
+        }
+
+
+        public void ExtractEeprom(string FileName, string Descr, PCMData PCM)
+        {
+            try {
+                byte[] buf;
+
+                Logger("Reading Eeprom_data from file: " + FileName);
+                buf = ReadBin(FileName, 0x4000, 0x4000);
+                GetEEpromInfo(buf, ref PCM);
+                uint Model = GetModelFromEeprom(buf);
+                if (Model < 1999)
+                {
+                    Logger("Unknown Eeprom");
+                    return;
+                }
+                string FnameStart = Path.Combine(Application.StartupPath, "Calibration", Model + "-" + SegmentNames[9] + "-" + PCM.Segments[9].PN.ToString() + "-" + PCM.Segments[9].Ver);
+                string SegFname = SegmentFileName(FnameStart, ".calsegment");
+                if (SegFname == "")
+                    return;
+                Logger("Writing " + SegmentNames[9] + " to file: " + SegFname);
+                WriteSegmentToFile(SegFname, 0, 0x4000, buf);
+                StreamWriter sw = new StreamWriter(SegFname + ".txt");
+                sw.WriteLine(Descr);
+                sw.Close();
+                Logger("[OK]");
+                return;
+            }
+
+            catch (Exception ex)
+            {
+                Logger("Error: " + ex.Message);
+            }
+
+        }
+
         public void ExtractSegments(string FileName, string Descr)
         {
-            try { 
-                uint Fnr = 0;
+            try
+            {
                 PCMData PCM = InitPCM();
                 byte[] buf;
 
                 long fsize = new System.IO.FileInfo(FileName).Length;
                 if (fsize != (long)(512 * 1024) && fsize != (long)(1024 * 1024))
-                { 
+                {
                     Logger("Unknown file: " + FileName + ". Size = " + fsize.ToString());
                     return;
                 }
 
                 bool[] Selections = GetSelections();
-                int scount = 0;
-                for (int i = 1; i < MaxSeg; i++)
+
+                if (Selections[9])
                 {
-                    if (Selections[i])
-                        scount++;
-                }
-                if (scount == 1 && Selections[9])   // Only Eeprom_data is selected. Special case.
-                {
-                    Logger("Reading Eeprom_data from file: " + FileName);
-                    buf = ReadBin(FileName, 0x4000, 0x4000);
-                    GetEEpromInfo(buf, ref PCM);
-                    uint Model = GetModelFromEeprom(buf);
-                    if (Model< 1999)
-                    {
-                        Logger("Unknown Eeprom");
-                        return;
-                    }
-                    string FnameStart = Path.Combine(Application.StartupPath, "Calibration", Model + "-" + SegmentNames[9] + "-" + PCM.Segments[9].PN.ToString() + "-" + PCM.Segments[9].Ver);
-                    string SegFname = FnameStart + ".calsegment";
-                    Fnr = 0;
-                    while (File.Exists(SegFname))
-                    {
-                        Fnr++;
-                        SegFname = FnameStart + "(" + Fnr.ToString() + ").calsegment";
-                    }
-                    Logger("Writing " + SegmentNames[9] + " to file: " + SegFname );
-                    WriteSegmentToFile(SegFname, 0, 0x4000, buf);
-                    StreamWriter sw = new StreamWriter(SegFname + ".txt");
-                    sw.WriteLine(Descr);
-                    sw.Close();
-                    Logger("[OK]");
-                    return;
+                    ExtractEeprom(FileName, Descr, PCM);
                 }
 
                 GetPcmType(FileName, ref PCM);
@@ -120,70 +155,58 @@ namespace PCMBinBuilder
                     return;
                 }
 
+
                 Logger("Reading segment addresses from file: " + FileName);
                 buf = ReadBin(FileName, 0, PCM.BinSize);
                 GetSegmentAddresses(buf, ref PCM);
-
                 GetSegmentInfo(buf, ref PCM);
-                GetEEpromInfo(buf, ref PCM);
                 Logger("[OK]");
 
-                for (int s = 1; s < MaxSeg; s++)
+                for (int s = 1; s <= 8 ; s++)
                 {
-                    if (Selections[s])
+                    if (Selections[s]) //This segment is selected with checkboxes
                     {
+                        string FnameStart;
                         if (s == 1) //OS
                         {
-                            string tmp = Path.Combine(Application.StartupPath, "OS", PCM.Model + "-" + PCM.Segments[1].PN.ToString() + "-" + PCM.Segments[1].Ver);
-                            string OsFile = tmp + ".ossegment1";
-                            Fnr = 0;
-                            while (File.Exists(OsFile))
-                            {
-                                Fnr++;
-                                OsFile = tmp + "(" + Fnr.ToString() + ").ossegment1";
+                            FnameStart = Path.Combine(Application.StartupPath, "OS", PCM.Model + "-" + PCM.Segments[1].PN.ToString() + "-" + PCM.Segments[1].Ver);
+                            string OsFile = SegmentFileName(FnameStart, ".ossegment1");
+
+                            if (OsFile != "")
+                            { 
+
+                                Logger("Writing " + SegmentNames[s] + " to file: " + OsFile + ", size: " + PCM.Segments[s].Length.ToString() + " (0x" + PCM.Segments[s].Length.ToString("X4") + ")");
+                                WriteSegmentToFile(OsFile, PCM.Segments[1].Start, PCM.Segments[1].Length, buf);
+                                Logger("Writing " + SegmentNames[0] + " to file: " + OsFile.Replace(".ossegment1", ".ossegment2") + ", size: " + PCM.Segments[0].Length.ToString() + " (0x" + PCM.Segments[0].Length.ToString("X4") + ")");
+                                WriteSegmentToFile(OsFile.Replace(".ossegment1", ".ossegment2"), PCM.Segments[0].Start, PCM.Segments[0].Length, buf);
+                                Logger("[OK]");
+
+                                //Write description to file
+                                StreamWriter sw = new StreamWriter(OsFile + ".txt");
+                                sw.WriteLine(Descr);
+                                sw.Close();
                             }
-
-                            Logger("Writing " + SegmentNames[s] + " to file: " + OsFile + ", size: " + PCM.Segments[s].Length.ToString() + " (0x" + PCM.Segments[s].Length.ToString("X4") + ")");
-                            WriteSegmentToFile(OsFile, PCM.Segments[1].Start, PCM.Segments[1].Length, buf);
-                            Logger("Writing " + SegmentNames[0] + " to file: " + OsFile.Replace(".ossegment1", ".ossegment2") + ", size: " + PCM.Segments[0].Length.ToString() + " (0x" + PCM.Segments[0].Length.ToString("X4") + ")");
-                            WriteSegmentToFile(OsFile.Replace(".ossegment1", ".ossegment2"), PCM.Segments[0].Start, PCM.Segments[0].Length, buf);
-                            Logger("[OK]");
-
-                            //Write description to file
-                            StreamWriter sw = new StreamWriter(OsFile + ".txt");
-                            sw.WriteLine(Descr);
-                            sw.Close();
                         }
                         else //Cal Segments
                         {
-                            string FnameStart;
-                            if (s == 9) //Eeprom_data
+                            FnameStart = Path.Combine(Application.StartupPath, "Calibration", PCM.Segments[1].PN.ToString() + "-" + SegmentNames[s] + "-" + PCM.Segments[s].PN.ToString() + "-" + PCM.Segments[s].Ver);
+                            string SegFname =  SegmentFileName(FnameStart, ".calsegment");
+                            if (SegFname != "")
                             {
-                                FnameStart = Path.Combine(Application.StartupPath, "Calibration", PCM.EepromType.ToString() + "-" + SegmentNames[s] + "-" + PCM.Segments[s].PN.ToString() + "-" + PCM.Segments[s].Ver);
-                                GetEEpromInfo(buf, ref PCM);
+                                Logger("Writing " + SegmentNames[s] + " to file: " + SegFname + ", size: " + PCM.Segments[s].Length.ToString() + " (0x" + PCM.Segments[s].Length.ToString("X4") + ")");
+                                WriteSegmentToFile(SegFname, PCM.Segments[s].Start, PCM.Segments[s].Length, buf);
+                                StreamWriter sw = new StreamWriter(SegFname + ".txt");
+                                sw.WriteLine(Descr);
+                                sw.Close();
+                                Logger("[OK]");
                             }
-                            else
-                                FnameStart = Path.Combine(Application.StartupPath, "Calibration", PCM.Segments[1].PN.ToString() + "-" + SegmentNames[s] + "-" + PCM.Segments[s].PN.ToString() + "-" + PCM.Segments[s].Ver);
-                            string SegFname = FnameStart + ".calsegment";
-                            Fnr = 0;
-                            while (File.Exists(SegFname))
-                            {
-                                Fnr++;
-                                SegFname = FnameStart + "(" + Fnr.ToString() + ").calsegment";
-                            }
-                            Logger("Writing " + SegmentNames[s] + " to file: " + SegFname + ", size: " + PCM.Segments[s].Length.ToString() + " (0x" + PCM.Segments[s].Length.ToString("X4") + ")");
-                            WriteSegmentToFile(SegFname, PCM.Segments[s].Start, PCM.Segments[s].Length, buf);
-                            StreamWriter sw = new StreamWriter(SegFname + ".txt");
-                            sw.WriteLine(Descr);
-                            sw.Close();
-                            Logger("[OK]");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger("Error: " + ex.Message);
+                Logger(ex.Message);
             }
 
         }

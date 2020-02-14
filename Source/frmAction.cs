@@ -438,7 +438,7 @@ namespace PCMBinBuilder
             }
             catch (Exception e)
             {
-                Logger("Error:", true);
+                Logger("Error: ", true);
                 Logger(e.Message);
                 return false;
             }
