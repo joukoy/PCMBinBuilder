@@ -25,27 +25,27 @@ namespace PCMBinBuilder
 
         private static PCMData PCM1;
 
-        public void LoadBasefile()
+        public bool LoadBasefile()
         {
             this.Text = "Modify BIN";
             string FileName = SelectFile();
             if (FileName.Length < 1)
-                return;
+                return false;
             long fsize = new System.IO.FileInfo(FileName).Length;
             if (fsize != (512*1024) && fsize != (1024*1024))
             {
                 MessageBox.Show("Unknown file", "Unknown file");
-                return;
+                return false;
             }
             PCM1 = InitPCM();
             PCM1.Segments[1].Source = FileName;
             frmAction frmA = new frmAction();
             frmA.Show();
             if (!frmA.LoadOS(FileName, ref PCM1))
-               return;
+               return false;
             labelBaseFile.Text = Path.GetFileName(FileName);
             labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data,PCM1);
-            
+            return true;
         }
 
         private void btnApply_Click(object sender, EventArgs e)

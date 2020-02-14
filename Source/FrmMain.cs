@@ -99,7 +99,8 @@ namespace PCMBinBuilder
         private void btnModifyBin_Click(object sender, EventArgs e)
         {
             FrmModBin FrmMod = new FrmModBin();
-            FrmMod.LoadBasefile();
+            if (!FrmMod.LoadBasefile())
+                return;
             FrmMod.ShowDialog(this);
             FrmMod.Dispose();
         }
