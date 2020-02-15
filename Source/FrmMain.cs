@@ -38,38 +38,10 @@ namespace PCMBinBuilder
                 if (FileName.Length < 1)
                     return;
 
-                PCMData PCM = InitPCM();
-                GetPcmType(FileName,ref PCM);
-                if(PCM.Type == "Unknown")
-                {
-                    MessageBox.Show("Unknown file", "Unknown file");
-                    return;
-                }
-                byte[] buf = ReadBin(FileName, 0, (uint)PCM.FileSize);
-
                 FrmFileinfo frmX = new FrmFileinfo();
                 frmX.Show(this);
+                frmX.ShowFileInfo(FileName, radioMultiInfo.Checked);
 
-                if (radioSingleInfo.Checked) 
-                { 
-                    frmX.textBox1.Text = Path.GetFileName(FileName) + Environment.NewLine + Environment.NewLine;
-                    string Finfo = PcmFileInfo(FileName, PCM);
-                    frmX.textBox1.Text += Finfo;
-                }
-                else
-                {
-                    frmX.textBox1.Text = "";
-                    string Fldr = Path.GetDirectoryName(FileName);
-                    DirectoryInfo d = new DirectoryInfo(Fldr);
-                    FileInfo[] Files = d.GetFiles("*.bin");
-                    foreach (FileInfo file in Files)
-                    {
-                        frmX.textBox1.AppendText( file.Name + Environment.NewLine + Environment.NewLine);
-                        string Finfo = PcmFileInfo(file.FullName,PCM);
-                        frmX.textBox1.AppendText(Finfo + Environment.NewLine);
-                        Application.DoEvents();
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -116,6 +88,7 @@ namespace PCMBinBuilder
         {
 
         }
+
     }
 
 }

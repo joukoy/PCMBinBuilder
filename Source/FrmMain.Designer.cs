@@ -141,7 +141,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(502, 239);
+            this.ClientSize = new System.Drawing.Size(502, 238);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.btnExtract);
             this.Controls.Add(this.btnModifyBin);
