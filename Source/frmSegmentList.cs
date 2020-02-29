@@ -26,12 +26,13 @@ namespace PCMBinBuilder
         }
 
         public PCMData PCM1;
-
+        private Button[] MyButtons;
         public void StartBuilding(ref PCMData PCM)
         {
             PCM1 = PCM; //Store in local object
             labelOS.Text = PCM1.Segments[1].PN + " " + PCM1.Segments[1].Ver;
             labelPCM.Text = PCM1.Model;
+            MyButtons = new Button[12]; //Segments + VIN + Patches
             int i = 1;
             for (int s = 2; s <= 9; s++)
             {
@@ -45,6 +46,7 @@ namespace PCMBinBuilder
                 newButton.Size = new Size(350, 25);
                 newButton.Click += new System.EventHandler(this.newButton_Click);
                 newButton.Tag = s;
+                MyButtons[s] = newButton;
                 i++;
             }
 
@@ -56,6 +58,7 @@ namespace PCMBinBuilder
             VINButton.Size = new Size(350, 25);
             VINButton.Click += new System.EventHandler(this.VINButton_Click);
             VINButton.Tag = 20;
+            MyButtons[10] = VINButton;
 
             i++;
             //Add button for Patches
@@ -66,7 +69,7 @@ namespace PCMBinBuilder
             PatchButton.Size = new Size(350, 50);
             PatchButton.Click += new System.EventHandler(this.PatchButton_Click);
             PatchButton.Tag = 30;
-
+            MyButtons[11] = PatchButton;
         }
 
         private void PatchButton_Click(object sender, EventArgs e)
@@ -137,18 +140,11 @@ namespace PCMBinBuilder
             {
                 PCM1 = frm2.PCM1;
                 if (SegNr == 9)
-                {
-                    for (int i=0; i< this.Controls.Count; i++)
-                    {
-                        if (this.Controls[i].Tag != null && (int)this.Controls[i].Tag == 20)
-                        {
-                            Button VinBtn = this.Controls[i] as Button;
-                            if (PCM1.NewVIN =="")
-                                VinBtn.Text = "VIN: " + PCM1.VIN;
-                            else
-                                VinBtn.Text = "VIN: " + PCM1.NewVIN;
-                        }
-                    }
+                {                   
+                    if (PCM1.NewVIN =="")
+                        MyButtons[10].Text = "VIN: " + PCM1.VIN;
+                    else
+                        MyButtons[10].Text = "VIN: " + PCM1.NewVIN;
                 }
             }
             frm2.Dispose();

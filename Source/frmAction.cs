@@ -30,9 +30,9 @@ namespace PCMBinBuilder
             FromFile = BEToUint16(buf, 0x500);
             if (Calculated != FromFile)
             {
-                Logger("OS              checksum: " + FromFile.ToString("X4").PadRight(5) + "=> " + Calculated.ToString("X4").PadRight(6) + "[Fixed]");
                 buf[0x500] = (byte)((Calculated & 0xFF00) >> 8);
                 buf[0x501] = (byte)(Calculated & 0xFF);
+                Logger("OS              checksum: " + FromFile.ToString("X4").PadRight(5) + "=> " + Calculated.ToString("X4").PadRight(6) + "[Fixed]");
             }
             else
             {
@@ -47,9 +47,9 @@ namespace PCMBinBuilder
                 FromFile = BEToUint16(buf, StartAddr);
                 if (Calculated != FromFile)
                 {
-                    Logger(SegmentNames[s].PadRight(16) + "checksum: " + FromFile.ToString("X4").PadRight(5) + "=> " + Calculated.ToString("X4").PadRight(6) + "[Fixed]");
                     buf[StartAddr] = (byte)((Calculated & 0xFF00) >> 8);
                     buf[StartAddr + 1] = (byte)(Calculated & 0xFF);
+                    Logger(SegmentNames[s].PadRight(16) + "checksum: " + FromFile.ToString("X4").PadRight(5) + "=> " + Calculated.ToString("X4").PadRight(6) + "[Fixed]");
                 }
                 else
                 {

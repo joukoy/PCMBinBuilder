@@ -22,6 +22,7 @@ namespace PCMBinBuilder
         private static List<uint> PatchAddr;
         private PCMData BasePCM;
         private PCMData ModPCM;
+        private CheckBox[] chkSegments;
 
         private void FrmPatcher_Load(object sender, EventArgs e)
         {
@@ -83,24 +84,14 @@ namespace PCMBinBuilder
             GetSegmentInfo(ModifierFile, ref ModPCM);
             for (int s=1; s<=8; s++)
             {
-                CheckBox chk = null;
-                for (int i = 0; i< this.Controls.Count; i++)
-                {
-                    if (this.Controls[i].Tag != null && (int)this.Controls[i].Tag == s)
-                    {
-                        chk = this.Controls[i] as CheckBox;
-                    }
-                }
                 if (BasePCM.Segments[s].PN != ModPCM.Segments[s].PN || BasePCM.Segments[s].Ver != ModPCM.Segments[s].Ver)
                 {
                     Logger(SegmentNames[s].PadLeft(11) + " differ: " + BasePCM.Segments[s].PN.ToString().PadRight(8) + " " + BasePCM.Segments[s].Ver + " <> " + ModPCM.Segments[s].PN.ToString().PadRight(8) + " " + ModPCM.Segments[s].Ver);
-                    chk.Enabled = false;
-                    chk.Checked = false;
+                    chkSegments[s].Enabled = false;
                 }
                 else
                 {
-                    chk.Enabled = true;
-                    chk.Checked = true;
+                    chkSegments[s].Enabled = true;
                 }
             }
         }
@@ -108,16 +99,21 @@ namespace PCMBinBuilder
         public void CompareSegment(uint StartAddress,uint Length,byte[] OrgFile, byte[] ModFile)
         {
             uint EndAddress = StartAddress + Length - 1;
-            for (uint i = StartAddress + 4; i < EndAddress; i++)
+            uint Mods = 0;
+            for (uint i = StartAddress; i < EndAddress; i++)
             {
                 if (OrgFile[i] != ModFile[i])
                 {
                     PatchAddr.Add(i) ;
                     PatchData.Add(ModFile[i]);
-                    txtResult.AppendText(i.ToString("X1") + ":" +OrgFile[i].ToString("X1")+ "=>" + ModFile[i].ToString("X1") + Environment.NewLine);
+                    if (Mods <= (uint)numLimitRows.Value)
+                        Logger(i.ToString("X1") + ":" +OrgFile[i].ToString("X1")+ "=>" + ModFile[i].ToString("X1") );
+                    Mods++;
                 }
-
             }
+            if (Mods >= (uint)numLimitRows.Value)
+                Logger("Showing " + numLimitRows.Value.ToString() + " of " + Mods.ToString() + " differences");
+
         }
         public void CompareBins()
         {
@@ -160,21 +156,15 @@ namespace PCMBinBuilder
                 labelOS.Text = BasePCM.Segments[1].PN.ToString();
                 ModifierFile = ReadBin(txtModifierFile.Text, 0, (uint)fsize);
                 txtResult.Text = "";
-                for (int i = 0; i < this.Controls.Count; i++)
+                for (int s = 1; s <= 9 ; s++)
                 {
-                    if (this.Controls[i].Tag != null)
+                    if (chkSegments[s].Enabled && chkSegments[s].Checked)
                     {
-                        int s = (int)this.Controls[i].Tag;
-                        if (this.Controls[i].Text == SegmentNames[s])
-                        {
-                            CheckBox chk = this.Controls[i] as CheckBox;
-                            if (chk.Checked)
-                            {
-                                CompareSegment(BasePCM.Segments[s].Start, BasePCM.Segments[s].Length, BaseFile, ModifierFile);
-                                if (s == 1) //If OS is selected, compare OS2 segment, too
-                                    CompareSegment(BasePCM.Segments[0].Start, BasePCM.Segments[0].Length, BaseFile, ModifierFile);
-                            }
-                        }
+                        Logger("Comparing segment " + SegmentNames[s]);
+
+                        CompareSegment(BasePCM.Segments[s].Start, BasePCM.Segments[s].Length, BaseFile, ModifierFile);
+                        if (s == 1) //If OS is selected, compare OS2 segment, too
+                            CompareSegment(BasePCM.Segments[0].Start, BasePCM.Segments[0].Length, BaseFile, ModifierFile);
                     }
                 }
 
@@ -187,7 +177,7 @@ namespace PCMBinBuilder
          private void btnCompare_Click(object sender, EventArgs e)
         {
             CompareBins();
-            if (PatchAddr.Count>0)
+            if (PatchAddr != null && PatchAddr.Count>0)
             {
                 btnSave.Enabled = true;
                 btnSave.Text = "Save patch";
@@ -244,7 +234,7 @@ namespace PCMBinBuilder
 
         public void addCheckBoxes()
         {
-            int i = 0;
+            chkSegments = new CheckBox[MaxSeg];
             int Left = 12;
             for (int s=1;s<=9; s++) 
             { 
@@ -257,7 +247,7 @@ namespace PCMBinBuilder
                 chk.Tag = s;
                 if (s < 9) //Don't compare eeprom as default
                     chk.Checked = true;
-                i++;
+                chkSegments[s] = chk;
             }
 
         }

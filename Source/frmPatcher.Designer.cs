@@ -39,6 +39,9 @@
             this.labelOS = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.numLimitRows = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.numLimitRows)).BeginInit();
             this.SuspendLayout();
             // 
             // btnOrgFile
@@ -142,11 +145,34 @@
             this.label2.TabIndex = 11;
             this.label2.Text = "Patch name / Description:";
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(482, 117);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(103, 13);
+            this.label3.TabIndex = 12;
+            this.label3.Text = "Limit display rows to:";
+            // 
+            // numLimitRows
+            // 
+            this.numLimitRows.Location = new System.Drawing.Point(591, 115);
+            this.numLimitRows.Name = "numLimitRows";
+            this.numLimitRows.Size = new System.Drawing.Size(54, 20);
+            this.numLimitRows.TabIndex = 13;
+            this.numLimitRows.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            // 
             // FrmPatcher
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(672, 432);
+            this.Controls.Add(this.numLimitRows);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.labelOS);
@@ -161,6 +187,7 @@
             this.Name = "FrmPatcher";
             this.Text = "Create patch";
             this.Load += new System.EventHandler(this.FrmPatcher_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.numLimitRows)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -178,5 +205,7 @@
         public System.Windows.Forms.Button btnOrgFile;
         public System.Windows.Forms.Button btnModFile;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.NumericUpDown numLimitRows;
     }
 }

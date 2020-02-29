@@ -30,9 +30,9 @@
         {
             this.label2 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.radioP59 = new System.Windows.Forms.RadioButton();
-            this.radioP01 = new System.Windows.Forms.RadioButton();
             this.radioP0199 = new System.Windows.Forms.RadioButton();
+            this.radioP01 = new System.Windows.Forms.RadioButton();
+            this.radioP59 = new System.Windows.Forms.RadioButton();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
@@ -43,7 +43,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Red;
-            this.label2.Location = new System.Drawing.Point(11, 101);
+            this.label2.Location = new System.Drawing.Point(11, 105);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(291, 16);
             this.label2.TabIndex = 1;
@@ -61,16 +61,17 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Select PCM Model";
             // 
-            // radioP59
+            // radioP0199
             // 
-            this.radioP59.AutoSize = true;
-            this.radioP59.Location = new System.Drawing.Point(18, 22);
-            this.radioP59.Name = "radioP59";
-            this.radioP59.Size = new System.Drawing.Size(75, 17);
-            this.radioP59.TabIndex = 0;
-            this.radioP59.TabStop = true;
-            this.radioP59.Text = "P59 - 1MB";
-            this.radioP59.UseVisualStyleBackColor = true;
+            this.radioP0199.AutoSize = true;
+            this.radioP0199.Location = new System.Drawing.Point(18, 68);
+            this.radioP0199.Name = "radioP0199";
+            this.radioP0199.Size = new System.Drawing.Size(147, 17);
+            this.radioP0199.TabIndex = 2;
+            this.radioP0199.TabStop = true;
+            this.radioP0199.Text = "P01 - 512 kB (1999-2000)";
+            this.radioP0199.UseVisualStyleBackColor = true;
+            this.radioP0199.CheckedChanged += new System.EventHandler(this.radioP0199_CheckedChanged);
             // 
             // radioP01
             // 
@@ -83,17 +84,16 @@
             this.radioP01.Text = "P01 - 512 kB (2001 - 2003)";
             this.radioP01.UseVisualStyleBackColor = true;
             // 
-            // radioP0199
+            // radioP59
             // 
-            this.radioP0199.AutoSize = true;
-            this.radioP0199.Location = new System.Drawing.Point(18, 68);
-            this.radioP0199.Name = "radioP0199";
-            this.radioP0199.Size = new System.Drawing.Size(147, 17);
-            this.radioP0199.TabIndex = 2;
-            this.radioP0199.TabStop = true;
-            this.radioP0199.Text = "P01 - 512 kB (1999-2000)";
-            this.radioP0199.UseVisualStyleBackColor = true;
-            this.radioP0199.CheckedChanged += new System.EventHandler(this.radioP0199_CheckedChanged);
+            this.radioP59.AutoSize = true;
+            this.radioP59.Location = new System.Drawing.Point(18, 22);
+            this.radioP59.Name = "radioP59";
+            this.radioP59.Size = new System.Drawing.Size(75, 17);
+            this.radioP59.TabIndex = 0;
+            this.radioP59.TabStop = true;
+            this.radioP59.Text = "P59 - 1MB";
+            this.radioP59.UseVisualStyleBackColor = true;
             // 
             // btnOK
             // 
