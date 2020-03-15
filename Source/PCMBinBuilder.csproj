@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Crc.cs" />
     <Compile Include="frmExtract.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -119,6 +120,7 @@
     <Compile Include="frmModifyBin.Designer.cs">
       <DependentUpon>frmModifyBin.cs</DependentUpon>
     </Compile>
+    <Compile Include="Helpers.cs" />
     <Compile Include="PCmFunctions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

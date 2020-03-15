@@ -24,6 +24,7 @@ namespace PCMBinBuilder
         }
         public void ShowSegmentInfo(string FileName)
         {
+            try { 
             textBox1.AppendText(Path.GetFileName(FileName) + Environment.NewLine + Environment.NewLine);
             long fsize = new FileInfo(FileName).Length;
             byte[] buf = ReadBin(FileName, 0, (uint)fsize);
@@ -40,6 +41,11 @@ namespace PCMBinBuilder
             textBox1.AppendText("PN: " + PN + Environment.NewLine);
             textBox1.AppendText("Ver: " + Ver + Environment.NewLine);
             textBox1.AppendText("CVN: " + CVN + Environment.NewLine + Environment.NewLine);
+            }
+            catch(Exception ex)
+            {
+                textBox1.AppendText(ex.Message);
+            }
         }
 
         private void ShowSingleFileInfo(string FileName)
@@ -51,7 +57,7 @@ namespace PCMBinBuilder
                 ShowSegmentInfo(FileName);
                 return;
             }
-            PCMData PCM = InitPCM();
+            PCMData PCM = new PCMData();
             GetPcmType(FileName, ref PCM);
             if (PCM.Type == "Unknown")
             {
@@ -87,7 +93,7 @@ namespace PCMBinBuilder
                 textBox1.AppendText("Error: " + ex.Message);
             }
         }
-        private void brtnSave_Click(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
             try { 
                 string FileName = SelectSaveFile("Text files (*.txt)|*.txt|All files (*.*)|*.*");

@@ -56,7 +56,7 @@ namespace PCMBinBuilder
             frmSel.Text = "Select OS";
             frmSel.labelSelectOS.Text = frmSel.Text;
             frmSel.Tag = 1;
-            PCMData PCM = InitPCM();
+            PCMData PCM = new PCMData();
             frmSel.LoadOSFiles(sender as Button, ref PCM);
             if (frmSel.ShowDialog() == DialogResult.OK)
             {

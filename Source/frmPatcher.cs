@@ -35,7 +35,7 @@ namespace PCMBinBuilder
             {
                 try { 
                 txtBaseFile.Text = BinFile;
-                BasePCM = InitPCM();
+                BasePCM = new PCMData();
                 Logger("Original file:");
                 Logger(PcmFileInfo(BinFile, BasePCM));
                 if (txtModifierFile.Text != "")
@@ -55,7 +55,7 @@ namespace PCMBinBuilder
             {
                 try { 
                 txtModifierFile.Text = BinFile;
-                ModPCM = InitPCM();
+                ModPCM = new PCMData();
                 Logger("Modified file:");
                 Logger(PcmFileInfo(BinFile, ModPCM));
                 if (txtBaseFile.Text != "")
@@ -138,8 +138,8 @@ namespace PCMBinBuilder
                 PatchAddr = new List<uint>();
                 PatchData = new List<uint>();
 
-                BasePCM = InitPCM();
-                ModPCM = InitPCM();
+                BasePCM = new PCMData();
+                ModPCM = new PCMData();
 
                 GetPcmType(txtBaseFile.Text, ref BasePCM);
                 GetPcmType(txtModifierFile.Text, ref ModPCM);

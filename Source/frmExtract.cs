@@ -19,8 +19,10 @@ namespace PCMBinBuilder
             addCheckBoxes();
         }
 
+        private CheckBox[] chkSegments;
         public void addCheckBoxes()
         {
+            chkSegments = new CheckBox[MaxSeg];
             int i = 0;
             int Left = 12;
             for (int s = 1; s <= 9; s++)
@@ -33,37 +35,12 @@ namespace PCMBinBuilder
                 Left += chk.Width + 5;
                 chk.Tag = s;
                 chk.Checked = true;
+                chkSegments[s] = chk;
                 i++;
             }
 
         }
 
-        private bool[] GetSelections()
-        {
-            /* Check what checkboxes are selected 
-             * Retun Boolean array of selections */
-
-            bool[] Sel = new bool[MaxSeg];
-
-            for (int i = 0; i < this.Controls.Count; i++)
-            {
-                int x;
-                if (this.Controls[i].Tag != null && int.TryParse(this.Controls[i].Tag.ToString(), out x))
-                {
-                    int s = (int)this.Controls[i].Tag;
-                    if (this.Controls[i].Text == SegmentNames[s])
-                    {
-                        CheckBox chk = this.Controls[i] as CheckBox;
-                        if (chk.Checked)
-                            Sel[s] = true;
-                        else
-                            Sel[s] = false;
-                    }
-                }
-            }
-            return Sel;
-
-        }
 
         private string SegmentFileName (string FnameStart, string Extension)
         {
@@ -131,7 +108,7 @@ namespace PCMBinBuilder
         {
             try
             {
-                PCMData PCM = InitPCM();
+                PCMData PCM = new PCMData();
                 byte[] buf;
 
                 long fsize = new System.IO.FileInfo(FileName).Length;
@@ -141,9 +118,7 @@ namespace PCMBinBuilder
                     return;
                 }
 
-                bool[] Selections = GetSelections();
-
-                if (Selections[9])
+                if (chkSegments[9].Checked)
                 {
                     ExtractEeprom(FileName, Descr, PCM);
                 }
@@ -164,7 +139,7 @@ namespace PCMBinBuilder
 
                 for (int s = 1; s <= 8 ; s++)
                 {
-                    if (Selections[s]) //This segment is selected with checkboxes
+                    if (chkSegments[s].Checked) //This segment is selected with checkboxes
                     {
                         string FnameStart;
                         if (s == 1) //OS

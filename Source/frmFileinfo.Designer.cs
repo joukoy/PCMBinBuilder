@@ -28,19 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.brtnSave = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
-            // brtnSave
+            // btnSave
             // 
-            this.brtnSave.Location = new System.Drawing.Point(413, 33);
-            this.brtnSave.Name = "brtnSave";
-            this.brtnSave.Size = new System.Drawing.Size(83, 24);
-            this.brtnSave.TabIndex = 1;
-            this.brtnSave.Text = "Save...";
-            this.brtnSave.UseVisualStyleBackColor = true;
-            this.brtnSave.Click += new System.EventHandler(this.brtnSave_Click);
+            this.btnSave.Location = new System.Drawing.Point(413, 33);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(83, 24);
+            this.btnSave.TabIndex = 1;
+            this.btnSave.Text = "Save...";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // textBox1
             // 
@@ -58,7 +58,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(498, 553);
-            this.Controls.Add(this.brtnSave);
+            this.Controls.Add(this.btnSave);
             this.Controls.Add(this.textBox1);
             this.Name = "FrmFileinfo";
             this.Text = "BIN File information";
@@ -69,7 +69,7 @@
         }
 
         #endregion
-        private System.Windows.Forms.Button brtnSave;
+        private System.Windows.Forms.Button btnSave;
         public System.Windows.Forms.TextBox textBox1;
     }
 }

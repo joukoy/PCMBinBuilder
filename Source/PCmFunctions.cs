@@ -31,8 +31,11 @@ public class PcmFunctions
         public UInt16 NewKey;
     }
 
-    public struct PCMData
-    {
+    public const int MaxSeg = 10;
+    public static string[] SegmentNames = new string[MaxSeg];
+
+    public class PCMData
+    {         
         public String Type;
         public string Model;
         public uint BinSize;
@@ -42,19 +45,78 @@ public class PcmFunctions
         public List<Patch> PatchList;
         public string VIN;
         public string NewVIN;
+
+        public PCMData()
+        {
+            Segments = new PcmSegment[MaxSeg];
+            VIN = "";
+            NewVIN = "";
+            PatchList = new List<Patch>();
+
+            for (int s = 0; s < MaxSeg; s++)
+            {
+                Segments[s].PN = 0;
+                Segments[s].Ver = "";
+                Segments[s].Source = "";
+            }
+
+        }
+        public string GetModifications()
+        {
+            string Finfo = "";
+
+            for (int i = 2; i <= 9; i++)
+            {
+                if (Segments[i].Source != "")
+                {
+                    //Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].Source + Environment.NewLine;
+                    Finfo += SegmentNames[i].PadRight(20) + Segments[i].PN.ToString() + " " + Segments[i].Ver + Environment.NewLine;
+                }
+
+            }
+            if (NewVIN != "" && VIN != NewVIN)
+                Finfo += Environment.NewLine + "VIN => ".PadRight(20) + NewVIN + Environment.NewLine;
+            if (PatchList.Count > 0)
+            {
+                Finfo += Environment.NewLine + "Patches: ";
+                foreach (Patch P in PatchList)
+                    Finfo += P.Name + ", ";
+            }
+            return Finfo;
+        }
+
+        public void SetPCMModel(string PCMModel)
+        {
+            if (PCMModel == "P59")
+            {
+                Type = "P59";
+                Model = "P59";
+                BinSize = (1024 * 1024);
+                EepromType = 2001;
+            }
+            if (PCMModel == "P01(01-03)")
+            {
+                Type = "P01";
+                BinSize = (512 * 1024);
+                Model = "P01(01-03)";
+                EepromType = 2001;
+            }
+            if (PCMModel == "P01(99-00)")
+            {
+                Type = "P01";
+                BinSize = (512 * 1024);
+                Model = "P01(99-00)";
+                EepromType = 1999;
+            }
+
+        }
+
     }
 
-    public const int MaxSeg = 10;
-    //Use global variables when building or modifying BIN, not for info
-    //public static PcmSegment[] PcmSegments = NewSegments();
-    //public static string VIN = "";
-    //public static string NewVIN = "";
-    //public static PCMinfo PCM;
-    public static string[] SegmentNames = new string[MaxSeg];
 
     public static void InitializeMe()
     {
-        SegmentNames[0] = "OS2";        
+        SegmentNames[0] = "OS2";
         SegmentNames[1] = "OS";
         SegmentNames[2] = "EngineCal";
         SegmentNames[3] = "EngineDiag";
@@ -65,7 +127,7 @@ public class PcmFunctions
         SegmentNames[8] = "Speedo";
         SegmentNames[9] = "EEprom_data";
 
-        
+
 
         if (!File.Exists(Path.Combine(Application.StartupPath, "OS")))
             Directory.CreateDirectory(Path.Combine(Application.StartupPath, "OS"));
@@ -75,23 +137,6 @@ public class PcmFunctions
             Directory.CreateDirectory(Path.Combine(Application.StartupPath, "Patches"));
     }
 
-    public static PCMData InitPCM()
-    {
-        PCMData newPCM = new PCMData();
-        newPCM.Segments = new PcmSegment[MaxSeg];
-        newPCM.VIN = "";
-        newPCM.NewVIN = "";
-        newPCM.PatchList = new List<Patch>();
-
-        for (int s = 0; s< MaxSeg; s++)
-        {
-            newPCM.Segments[s].PN = 0;
-            newPCM.Segments[s].Ver = "";
-            newPCM.Segments[s].Source = "";
-        }
-        return newPCM;
-    }
-        
     public static string SelectFile(string Title = "Select bin file", Boolean Allfiles = false)
     {
 
@@ -171,11 +216,10 @@ public class PcmFunctions
         string Result = "";
 
         Calculated = CalculateChecksumOS(buf, PCM);
-        FromFile = BEToUint16(buf,0x500);
+        FromFile = BEToUint16(buf, 0x500);
         if (Calculated == FromFile)
         {
             Result = "OS:".PadRight(12) + "Bin Checksum: " + FromFile.ToString("X4").PadRight(4) + " [OK]";
-            //Logger("OS checksum: " + buf[0x500].ToString("X1") + buf[0x501].ToString("X1") + " OK");
         }
         else
         {
@@ -219,48 +263,24 @@ public class PcmFunctions
 
     }
 
-    public static string GetModifications(PCMData PCM)
-    {
-        string Finfo = "";
-
-        for (int i = 2; i <= 9; i++)
-        {
-            if (PCM.Segments[i].Source != "")
-            {
-                //Finfo += globals.PcmSegments[i].Name.PadRight(20) + globals.PcmSegments[i].Source + Environment.NewLine;
-                Finfo += SegmentNames[i].PadRight(20) + PCM.Segments[i].PN.ToString() + " " + PCM.Segments[i].Ver + Environment.NewLine;
-            }
-
-        }
-        if (PCM.NewVIN != "" && PCM.VIN != PCM.NewVIN)
-            Finfo += Environment.NewLine + "VIN => ".PadRight(20) + PCM.NewVIN + Environment.NewLine;
-        if (PCM.PatchList.Count > 0)
-        {
-            Finfo += Environment.NewLine + "Patches: ";
-            foreach (Patch P in PCM.PatchList)
-                Finfo += P.Name + ", ";
-        }
-        return Finfo;
-
-    }
 
     public static string PcmBufInfo(byte[] buf, PCMData PCM)
     {
-        GetSegmentAddresses(buf,ref PCM);
+        GetSegmentAddresses(buf, ref PCM);
         string Finfo = "PCM Model: ".PadRight(20) + PCM.Model + Environment.NewLine + Environment.NewLine;
         if (buf.Length == 16384)
-        { 
+        {
             Finfo += " ".PadLeft(20) + "* Segments *" + Environment.NewLine;
             for (int i = 1; i <= 8; i++)
             {
                 Finfo += SegmentNames[i].PadRight(15);
-                Finfo += " Size: " + PCM.Segments[i].Length.ToString().PadRight(5) + " (0x" + PCM.Segments[i].Length.ToString("X4") +")" + Environment.NewLine;
+                Finfo += " Size: " + PCM.Segments[i].Length.ToString().PadRight(5) + " (0x" + PCM.Segments[i].Length.ToString("X4") + ")" + Environment.NewLine;
             }
             Finfo += Environment.NewLine;
         }
         else
         {
-            GetSegmentInfo(buf,ref PCM);
+            GetSegmentInfo(buf, ref PCM);
             Finfo += " ".PadLeft(20) + "* Segments *" + Environment.NewLine;
             for (int i = 1; i <= 8; i++)
             {
@@ -269,7 +289,7 @@ public class PcmFunctions
             }
             Finfo += Environment.NewLine + " ".PadLeft(20) + "* Checksums *" + Environment.NewLine;
             Finfo += GetChecksumStatus(buf, PCM) + Environment.NewLine;
-            Finfo += " ".PadLeft(15) + "* Eeprom_data *" + Environment.NewLine + GetEEpromInfo(buf,ref PCM);
+            Finfo += " ".PadLeft(15) + "* Eeprom_data *" + Environment.NewLine + GetEEpromInfo(buf, ref PCM);
             Finfo += "VIN".PadRight(15) + GetVIN(buf) + Environment.NewLine + Environment.NewLine;
         }
         return Finfo;
@@ -319,31 +339,6 @@ public class PcmFunctions
 
     }
 
-    public static void SetPCMModel(ref PCMData PCM, string Model)
-    {
-        if (Model == "P59")
-        {
-            PCM.Type = "P59";
-            PCM.Model = "P59";
-            PCM.BinSize = (1024 * 1024);
-            PCM.EepromType = 2001;
-        }
-        if (Model == "P01(01-03)")
-        {
-            PCM.Type = "P01";
-            PCM.BinSize = (512 * 1024);
-            PCM.Model = "P01(01-03)";
-            PCM.EepromType = 2001;
-        }
-        if (Model == "P01(99-00)")
-        {
-            PCM.Type = "P01";
-            PCM.BinSize = (512 * 1024);
-            PCM.Model = "P01(99-00)";
-            PCM.EepromType = 1999;
-        }
-
-    }
 
     public static void GetPcmType(string FileName, ref PCMData PCM)
     {
@@ -353,42 +348,42 @@ public class PcmFunctions
         PCM.EepromType = 0;
 
         PCM.FileSize = new FileInfo(FileName).Length;
-        if (PCM.FileSize != (512*1024) && PCM.FileSize != (1024*1024) && PCM.FileSize != 16384)
+        if (PCM.FileSize != (512 * 1024) && PCM.FileSize != (1024 * 1024) && PCM.FileSize != 16384)
         {
             return;
         }
-        if (PCM.FileSize == (512*1024)) //P01
+        if (PCM.FileSize == (512 * 1024)) //P01
         {
-            byte[] buf = ReadBin(FileName,0, (uint)PCM.FileSize);
+            byte[] buf = ReadBin(FileName, 0, (uint)PCM.FileSize);
             PCM.EepromType = GetModelFromEeprom(buf);
             if (PCM.EepromType == 1999)
-                SetPCMModel(ref PCM, "P01(99-00)");
+                PCM.SetPCMModel("P01(99-00)");
             else if (PCM.EepromType == 2001)
-                SetPCMModel(ref PCM, "P01(01-03)");
+                PCM.SetPCMModel("P01(01-03)");
             else
                 return;
         }
         if (PCM.FileSize == (1024 * 1024)) //P59
         {
-            SetPCMModel(ref PCM, "P59");
+            PCM.SetPCMModel("P59");
         }
         if (PCM.FileSize == 16384) //OS segment
         {
-            if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P59")) 
+            if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P59"))
             {
-                SetPCMModel(ref PCM, "P59");
+                PCM.SetPCMModel("P59");
             }
-            else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(01-03)")) 
+            else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(01-03)"))
             {
-                SetPCMModel(ref PCM, "P01(01-03)");
+                PCM.SetPCMModel("P01(01-03)");
             }
             else if (Path.GetFileName(FileName).EndsWith("ossegment1") && Path.GetFileName(FileName).StartsWith("P01(99-00)"))
             {
-                SetPCMModel(ref PCM, "P01(99-00)");
+                PCM.SetPCMModel("P01(99-00)");
             }
             else
             {
-                AskPCMModel(ref PCM,false);
+                AskPCMModel(ref PCM, false);
             }
         }
 
@@ -425,7 +420,7 @@ public class PcmFunctions
         PCM.Segments[9].Length = 0x4000;
 
         PCM.Segments[1].PN = BEToUint32(buf, 0x504);
-        PCM.Segments[1].Ver = System.Text.Encoding.ASCII.GetString(buf,0x508,2);
+        PCM.Segments[1].Ver = System.Text.Encoding.ASCII.GetString(buf, 0x508, 2);
 
         //Read Segment Addresses from bin, starting at 0x514
         uint offset = 0x514;
@@ -550,7 +545,7 @@ public class PcmFunctions
         Key = GetEepromKey(buf);
 
         string Ret = "Seed ".PadRight(20) + Key.Seed.ToString("X4") + Environment.NewLine;
-        Ret += "Bin Key ".PadRight(20) + Key.Key.ToString("X4") ;
+        Ret += "Bin Key ".PadRight(20) + Key.Key.ToString("X4");
         if (Key.Key == Key.NewKey)
             Ret += " [OK]" + Environment.NewLine;
         else
@@ -605,7 +600,7 @@ public class PcmFunctions
 
     public static void ValidateBuffer(byte[] buf, PCMData PCM)
     {
-        if(buf[0x503] != 1)
+        if (buf[0x503] != 1)
             throw new Exception("Error: OS segment 1 not valid!");
         if (buf[0x20000] != 0x4E || buf[0x20001] != 0x56)
             throw new Exception("Error: OS segment 2 is not valid!");
@@ -627,12 +622,12 @@ public class PcmFunctions
         return VINcode.ToUpper();
     }
 
-   
+
 
     public static uint BEToUint32(byte[] buf, uint offset)
     {
         //Shift first byte 24 bits left, second 16bits left...
-        return (uint)((buf[offset] << 24) | (buf[offset  + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3]);
+        return (uint)((buf[offset] << 24) | (buf[offset + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3]);
     }
 
     public static UInt16 BEToUint16(byte[] buf, uint offset)
@@ -644,7 +639,7 @@ public class PcmFunctions
     {
         return (ushort)((ushort)((x & 0xff) << 8) | ((x >> 8) & 0xff));
     }
-    
+
     public static uint SwapBytes(uint x)
     {
         return ((x & 0x000000ff) << 24) +
@@ -652,162 +647,8 @@ public class PcmFunctions
                ((x & 0x00ff0000) >> 8) +
                ((x & 0xff000000) >> 24);
     }
-
-    public class Crc16
-    {
-        const ushort polynomial = 0xA001;
-        ushort[] table = new ushort[256];
-
-        public ushort ComputeChecksum(byte[] bytes)
-        {
-            ushort crc = 0;
-            for (int i = 0; i < bytes.Length; ++i)
-            {
-                byte index = (byte)(crc ^ bytes[i]);
-                crc = (ushort)((crc >> 8) ^ table[index]);
-            }
-            return crc;
-        }
-
-        public byte[] ComputeChecksumBytes(byte[] bytes)
-        {
-            ushort crc = ComputeChecksum(bytes);
-            return BitConverter.GetBytes(crc);
-        }
-
-        public Crc16()
-        {
-            ushort value;
-            ushort temp;
-            for (ushort i = 0; i < table.Length; ++i)
-            {
-                value = 0;
-                temp = i;
-                for (byte j = 0; j < 8; ++j)
-                {
-                    if (((value ^ temp) & 0x0001) != 0)
-                    {
-                        value = (ushort)((value >> 1) ^ polynomial);
-                    }
-                    else
-                    {
-                        value >>= 1;
-                    }
-                    temp >>= 1;
-                }
-                table[i] = value;
-            }
-        }
-    }
-    public class Crc
-    {
-        private static UInt32[] crcTable;
-        private const int WIDTH = 8 * 4;
-        private const UInt32 TOPBIT = 0x80000000;
-        private const UInt32 POLYNOMIAL = 0x04C11DB7;
-
-        public Crc()
-        {
-            if (crcTable == null)
-            {
-                crcTable = new UInt32[256];
-                UInt32 remainder;
-
-                /*
-                 * Compute the remainder of each possible dividend.
-                 */
-                for (int dividend = 0; dividend < 256; ++dividend)
-                {
-                    /*
-                     * Start with the dividend followed by zeros.
-                     */
-                    remainder = (UInt32)(dividend << (WIDTH - 8));
-
-                    /*
-                     * Perform modulo-2 division, a bit at a time.
-                     */
-                    for (int bit = 8; bit > 0; --bit)
-                    {
-                        /*
-                         * Try to divide the current data bit.
-                         */
-                        if ((remainder & TOPBIT) != 0)
-                        {
-                            remainder = (remainder << 1) ^ POLYNOMIAL;
-                        }
-                        else
-                        {
-                            remainder = (remainder << 1);
-                        }
-                    }
-
-                    /*
-                     * Store the result into the table.
-                     */
-                    crcTable[dividend] = remainder;
-                }
-            }
-        }
-    
-        public UInt32 GetCrc(byte[] buffer, UInt32 start, UInt32 length)
-        {
-            byte data;
-            UInt32 remainder = 0;
-
-            for (UInt32 index = start; index < start + length; index++)
-            {
-                /*
-                 * Divide the message by the polynomial, a byte at a time.
-                 */
-                data = (byte)(buffer[index] ^ (remainder >> (WIDTH - 8)));
-                remainder = crcTable[data] ^ (remainder << 8);
-            }
-
-            /*
-             * The final remainder is the CRC.
-             */
-            return (remainder);
-        }
-    }
 }
 
 
-public static class Helpers
-{
 
-    public static byte[] Reverse(this byte[] b)
-    {
-        Array.Reverse(b);
-        return b;
-    }
-    public static UInt16 ReadUInt16BE(this BinaryReader binRdr)
-    {
-        return BitConverter.ToUInt16(binRdr.ReadBytesRequired(sizeof(UInt16)).Reverse(), 0);
-    }
-
-    public static Int16 ReadInt16BE(this BinaryReader binRdr)
-    {
-        return BitConverter.ToInt16(binRdr.ReadBytesRequired(sizeof(Int16)).Reverse(), 0);
-    }
-
-    public static UInt32 ReadUInt32BE(this BinaryReader binRdr)
-    {
-        return BitConverter.ToUInt32(binRdr.ReadBytesRequired(sizeof(UInt32)).Reverse(), 0);
-    }
-
-    public static Int32 ReadInt32BE(this BinaryReader binRdr)
-    {
-        return BitConverter.ToInt32(binRdr.ReadBytesRequired(sizeof(Int32)).Reverse(), 0);
-    }
-
-    public static byte[] ReadBytesRequired(this BinaryReader binRdr, int byteCount)
-    {
-        var result = binRdr.ReadBytes(byteCount);
-
-        if (result.Length != byteCount)
-            throw new EndOfStreamException(string.Format("{0} bytes required from stream, but only {1} returned.", byteCount, result.Length));
-
-        return result;
-    }
-}
 

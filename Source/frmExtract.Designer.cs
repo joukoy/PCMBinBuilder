@@ -39,9 +39,9 @@
             this.labelDescr = new System.Windows.Forms.Label();
             this.txtDescr = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.radioSkip = new System.Windows.Forms.RadioButton();
-            this.radioReplace = new System.Windows.Forms.RadioButton();
             this.radioRename = new System.Windows.Forms.RadioButton();
+            this.radioReplace = new System.Windows.Forms.RadioButton();
+            this.radioSkip = new System.Windows.Forms.RadioButton();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -154,37 +154,37 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Duplicates";
             // 
-            // radioSkip
+            // radioRename
             // 
-            this.radioSkip.AutoSize = true;
-            this.radioSkip.Location = new System.Drawing.Point(240, 16);
-            this.radioSkip.Name = "radioSkip";
-            this.radioSkip.Size = new System.Drawing.Size(46, 17);
-            this.radioSkip.TabIndex = 0;
-            this.radioSkip.Text = "Skip";
-            this.radioSkip.UseVisualStyleBackColor = true;
+            this.radioRename.AutoSize = true;
+            this.radioRename.Location = new System.Drawing.Point(143, 19);
+            this.radioRename.Name = "radioRename";
+            this.radioRename.Size = new System.Drawing.Size(65, 17);
+            this.radioRename.TabIndex = 2;
+            this.radioRename.Text = "Rename";
+            this.radioRename.UseVisualStyleBackColor = true;
             // 
             // radioReplace
             // 
             this.radioReplace.AutoSize = true;
-            this.radioReplace.Location = new System.Drawing.Point(114, 16);
+            this.radioReplace.Location = new System.Drawing.Point(72, 19);
             this.radioReplace.Name = "radioReplace";
             this.radioReplace.Size = new System.Drawing.Size(65, 17);
             this.radioReplace.TabIndex = 1;
             this.radioReplace.Text = "Replace";
             this.radioReplace.UseVisualStyleBackColor = true;
             // 
-            // radioRename
+            // radioSkip
             // 
-            this.radioRename.AutoSize = true;
-            this.radioRename.Checked = true;
-            this.radioRename.Location = new System.Drawing.Point(7, 16);
-            this.radioRename.Name = "radioRename";
-            this.radioRename.Size = new System.Drawing.Size(65, 17);
-            this.radioRename.TabIndex = 2;
-            this.radioRename.TabStop = true;
-            this.radioRename.Text = "Rename";
-            this.radioRename.UseVisualStyleBackColor = true;
+            this.radioSkip.AutoSize = true;
+            this.radioSkip.Checked = true;
+            this.radioSkip.Location = new System.Drawing.Point(7, 19);
+            this.radioSkip.Name = "radioSkip";
+            this.radioSkip.Size = new System.Drawing.Size(46, 17);
+            this.radioSkip.TabIndex = 0;
+            this.radioSkip.TabStop = true;
+            this.radioSkip.Text = "Skip";
+            this.radioSkip.UseVisualStyleBackColor = true;
             // 
             // frmExtract
             // 

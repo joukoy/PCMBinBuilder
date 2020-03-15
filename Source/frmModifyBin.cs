@@ -37,7 +37,7 @@ namespace PCMBinBuilder
                 MessageBox.Show("Unknown file", "Unknown file");
                 return false;
             }
-            PCM1 = InitPCM();
+            PCM1 = new PCMData();
             PCM1.Segments[1].Source = FileName;
             frmAction frmA = new frmAction();
             frmA.Show();
@@ -64,8 +64,7 @@ namespace PCMBinBuilder
             {
                 PCM1 = frm2.PCM1;
                 labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
-                //labelBinInfo.Text += Environment.NewLine + "Modifications: " + Environment.NewLine;
-                labelMods.Text = GetModifications(PCM1);
+                labelMods.Text = PCM1.GetModifications();
             }
             frm2.Dispose();
 
@@ -97,8 +96,7 @@ namespace PCMBinBuilder
                 // Read the contents of VinDialog's TextBox.
                 PCM1.NewVIN = VinDialog.TextBox1.Text;
                 labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
-                //labelBinInfo.Text += Environment.NewLine + "Modifications: " + Environment.NewLine;
-                labelMods.Text = GetModifications(PCM1);
+                labelMods.Text = PCM1.GetModifications();
             }
             VinDialog.Dispose();
 
@@ -117,8 +115,7 @@ namespace PCMBinBuilder
                 PCM1 = frmSS.PCM1;
                 frmSS.Dispose();
                 labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
-                //labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
-                labelMods.Text = GetModifications(PCM1);
+                labelMods.Text = PCM1.GetModifications();
             }
 
         }
@@ -128,8 +125,7 @@ namespace PCMBinBuilder
             frmAction frmA = new frmAction();
             frmA.FixSchekSums(ref PCM1.Segments[1].Data ,ref PCM1);
             labelBinInfo.Text = PcmBufInfo(PCM1.Segments[1].Data, PCM1);
-            //labelBinInfo.Text += Environment.NewLine + "            ** Modifications:" + Environment.NewLine;
-            labelMods.Text = GetModifications(PCM1);
+            labelMods.Text = PCM1.GetModifications();
             frmA.ShowDialog(this);
 
         }
