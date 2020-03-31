@@ -38,6 +38,7 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.radioMultiInfo = new System.Windows.Forms.RadioButton();
             this.radioSingleInfo = new System.Windows.Forms.RadioButton();
+            this.btnAbout = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -137,11 +138,22 @@
             this.radioSingleInfo.UseVisualStyleBackColor = true;
             this.radioSingleInfo.CheckedChanged += new System.EventHandler(this.radioSingleInfo_CheckedChanged);
             // 
+            // btnAbout
+            // 
+            this.btnAbout.Location = new System.Drawing.Point(411, 12);
+            this.btnAbout.Name = "btnAbout";
+            this.btnAbout.Size = new System.Drawing.Size(79, 27);
+            this.btnAbout.TabIndex = 10;
+            this.btnAbout.Text = "About";
+            this.btnAbout.UseVisualStyleBackColor = true;
+            this.btnAbout.Click += new System.EventHandler(this.btnAbout_Click);
+            // 
             // FrmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(502, 238);
+            this.Controls.Add(this.btnAbout);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.btnExtract);
             this.Controls.Add(this.btnModifyBin);
@@ -169,6 +181,7 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.RadioButton radioMultiInfo;
         private System.Windows.Forms.RadioButton radioSingleInfo;
+        private System.Windows.Forms.Button btnAbout;
     }
 }
 

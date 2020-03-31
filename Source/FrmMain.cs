@@ -89,6 +89,11 @@ namespace PCMBinBuilder
 
         }
 
+        private void btnAbout_Click(object sender, EventArgs e)
+        {
+            AboutBox1 frmA = new AboutBox1();
+            frmA.Show(this);
+        }
     }
 
 }
